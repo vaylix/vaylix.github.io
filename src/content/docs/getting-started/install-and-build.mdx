@@ -1,14 +1,13 @@
 ---
 title: Install and Build
-description: Build the Vaylix workspace and prepare the docs, server, and client locally.
+description: Build the Vaylix workspace and validate the server, client, and shared crates locally.
 ---
 
 ## Requirements
 
 - Rust toolchain for the main database workspace
-- Node.js 20 or newer for this documentation site
 
-## Build the Database Workspace
+## Build the Workspace
 
 From the Vaylix project root:
 
@@ -31,15 +30,10 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
 ```
 
-## Run the Docs Site
+## What This Produces
 
-The docs site in this repository is built with Starlight on Astro.
+The main workspace gives you:
 
-```sh
-npm install
-npm run dev
-```
-
-## Maintenance Note
-
-The docs site keeps its own maintained `Project Context` page inside the content tree. Update that page alongside architectural or operational changes so the documentation stays consistent with the codebase.
+- the `server` binary for running a Vaylix node
+- the `client` binary for interactive access
+- shared `command`, `transport`, and `engine` crates used by the runtime
