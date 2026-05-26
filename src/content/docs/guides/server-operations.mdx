@@ -1,0 +1,57 @@
+---
+title: Server Operations
+description: Configure runtime limits, audit logging, transport compression, and operational controls.
+---
+
+## Important Server Flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--bind` | Listener address |
+| `--port` | Listener port |
+| `--data-dir` | Persistent storage root |
+| `--user` / `--password` | Mandatory auth credentials |
+| `--ssl` | Enable TLS |
+| `--tls-cert` / `--tls-key` | TLS certificate and private key |
+| `--wal-sync` | WAL durability policy |
+| `--snapshot-interval-seconds` | Periodic background snapshotting |
+| `--expiration-sweep-interval-seconds` | Background TTL sweeper |
+| `--idle-timeout-seconds` | Disconnect idle clients |
+| `--compression` | Outbound frame compression mode |
+| `--audit-log-path` | Override audit log location |
+
+## Abuse Controls
+
+The server currently enforces:
+
+- request payload byte limits
+- key size limits
+- value size limits
+- batch key-count limits
+- per-session transaction queue limits
+- token-bucket request rate limiting
+- idle connection timeouts
+
+These are runtime guardrails, not a full denial-of-service strategy.
+
+## Audit Logging
+
+Audit logging is enabled automatically. By default the server writes:
+
+```text
+<data-dir>/audit.log
+```
+
+Override it if needed:
+
+```sh
+cargo run -p server -- --audit-log-path /var/log/vaylix/audit.log
+```
+
+## WAL Durability Modes
+
+- `buffered`: let the OS decide when to flush
+- `flush`: flush userspace buffers after append
+- `sync`: call through to kernel sync for each append
+
+For most local or early-stage deployments, `flush` is the practical default.

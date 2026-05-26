@@ -1,0 +1,66 @@
+---
+title: Security Model
+description: Authentication, TLS, at-rest encryption, audit logging, and the current security boundary.
+---
+
+## Authentication
+
+Authentication is mandatory.
+
+Development defaults:
+
+- username: `vaylix`
+- password: `vaylix`
+
+These are convenience defaults, not production credentials.
+
+## TLS
+
+TLS is supported and optional.
+
+Server requirements:
+
+- `--ssl`
+- `--tls-cert`
+- `--tls-key`
+
+Client options:
+
+- `--ssl`
+- `--tls-ca-cert`
+- `?ssl=true` in URL form
+
+## At-Rest Encryption
+
+Snapshots and WAL payloads are encrypted at rest using a server-managed keyring.
+
+Important property:
+
+- storage encryption is separate from the auth password
+
+That keeps authentication concerns and persistence-key management from collapsing into one weak configuration surface.
+
+## Audit Logging
+
+Audit logging records command-level accountability without storing secrets:
+
+- no passwords
+- no raw request payload contents
+- no value dumps
+
+What is stored instead:
+
+- who authenticated
+- what opcode ran
+- request ID
+- outcome
+- timing
+
+## Current Boundary
+
+What is still intentionally missing:
+
+- multi-user ACLs
+- mandatory TLS
+- signed audit pipelines
+- distributed trust boundaries for replicas or shards

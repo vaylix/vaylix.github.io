@@ -1,0 +1,87 @@
+---
+title: Run Server and Client
+description: Start a local Vaylix server, connect a client, and verify the basic workflow.
+---
+
+## Start the Server
+
+```sh
+cargo run -p server -- \
+  --bind 127.0.0.1 \
+  --port 9173 \
+  --user vaylix \
+  --password vaylix
+```
+
+What this gives you:
+
+- bound server on `127.0.0.1:9173`
+- mandatory authentication
+- default data directory if `--data-dir` is omitted
+- server-managed storage keyring
+
+## Start the Client
+
+```sh
+cargo run -p client -- \
+  --host 127.0.0.1 \
+  --port 9173
+```
+
+The client defaults to the development credentials:
+
+- username: `vaylix`
+- password: `vaylix`
+
+## URL-Based Connection
+
+```sh
+cargo run -p client -- \
+  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=table'
+```
+
+Supported URL query options:
+
+- `ssl=true`
+- `output=plain|table|json`
+- `ca_cert=/path/to/ca.pem`
+- `compression=none|zstd`
+
+## First Commands
+
+```text
+vaylix> ping
+PONG
+
+vaylix> set name alice
+OK
+
+vaylix> get name
+alice
+
+vaylix> info
+...
+```
+
+## TLS Example
+
+Server:
+
+```sh
+cargo run -p server -- \
+  --bind 127.0.0.1 \
+  --port 9173 \
+  --user vaylix \
+  --password vaylix \
+  --ssl \
+  --tls-cert ./certs/server.crt \
+  --tls-key ./certs/server.key
+```
+
+Client:
+
+```sh
+cargo run -p client -- \
+  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true' \
+  --tls-ca-cert ./certs/ca.crt
+```

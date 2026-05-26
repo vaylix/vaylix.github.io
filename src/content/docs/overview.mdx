@@ -1,0 +1,44 @@
+---
+title: Overview
+description: High-level technical overview of the Vaylix database, its scope, and how to read the documentation.
+---
+
+Vaylix is a Rust key/value database built around a strict transport boundary:
+
+`client -> transport -> TCP/TLS -> transport -> server -> engine`
+
+This site documents the implementation as it exists today, not an aspirational product surface. The current system is intentionally narrow and explicit:
+
+- single-node deployment model
+- string-to-string data model
+- framed binary transport shared by client and server
+- authenticated access with optional TLS
+- snapshot plus WAL durability
+- encrypted-at-rest persistence and audit logging
+
+## What the Docs Cover
+
+The documentation is split by responsibility so operational and architectural questions stay easy to locate.
+
+- `Getting Started` focuses on building the workspace, running the server and client, and using Docker persistence correctly.
+- `Guides` cover client behavior, server operations, and current transaction semantics.
+- `Reference` documents the CLI, wire protocol, persistence lifecycle, security model, and runtime guards.
+- `Architecture` explains the transport-first layering and the boundaries that shape future work.
+
+## What Vaylix Is Not Yet
+
+The project is being designed with growth in mind, but those capabilities are not shipped today.
+
+- no replication
+- no sharding
+- no distributed ACID semantics
+- no multi-user authorization model
+
+Those are roadmap constraints, not current features. The docs should stay honest about that distinction.
+
+## Suggested Reading Order
+
+1. Read [Why Vaylix](/why-vaylix/) for the architectural posture.
+2. Follow [Install and Build](/getting-started/install-and-build/) and [Run Server and Client](/getting-started/run-local/) to get a working local setup.
+3. Use [CLI Reference](/reference/cli-reference/) and [Wire Protocol](/reference/wire-protocol/) for day-to-day implementation details.
+4. Use [Project Context](/reference/project-context/) as the maintained engineering summary for the current system.

@@ -1,0 +1,38 @@
+---
+const isHomePage = Astro.url.pathname === '/';
+const containerClass = isHomePage ? 'sl-container sl-container-home' : 'sl-container';
+---
+
+<div class="content-panel">
+  <div class={containerClass}><slot /></div>
+</div>
+
+<style>
+  @layer starlight.core {
+    .content-panel {
+      padding: 1.5rem var(--sl-content-pad-x);
+    }
+
+    .content-panel + .content-panel {
+      border-top: 1px solid var(--sl-color-hairline);
+    }
+
+    .sl-container {
+      max-width: var(--sl-content-width);
+    }
+
+    .sl-container-home {
+      max-width: min(84rem, calc(100vw - 3rem));
+    }
+
+    .sl-container > :global(* + *) {
+      margin-top: 1.5rem;
+    }
+
+    @media (min-width: 72rem) {
+      .sl-container {
+        margin-inline: var(--sl-content-margin-inline, auto);
+      }
+    }
+  }
+</style>

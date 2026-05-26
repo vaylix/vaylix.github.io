@@ -1,0 +1,50 @@
+---
+title: Transactions
+description: Understand how MULTI, EXEC, and DISCARD behave in the current single-node engine.
+---
+
+## What Exists Today
+
+Vaylix supports:
+
+- `MULTI`
+- `EXEC`
+- `DISCARD`
+
+The current semantics are intentionally limited to the single-node engine.
+
+## Current Guarantees
+
+Inside one session:
+
+1. `MULTI` starts queueing commands.
+2. `EXEC` evaluates the queued commands against one working state.
+3. If every queued command succeeds, one WAL entry is appended and the whole batch commits.
+4. If any queued command fails, the transaction does not commit.
+
+This gives you atomic single-node commit behavior for queued data commands.
+
+## What It Is Not
+
+The current transaction system is not:
+
+- MVCC
+- distributed
+- replication-aware
+- exposed as a formal isolation-level model
+
+The docs and code should both remain explicit about that.
+
+## Commands That Do Not Belong in Transactions
+
+The current implementation keeps operational and local-only commands out of `EXEC` batches, including:
+
+- `AUTH`
+- `INFO`
+- `METRICS`
+- `SAVE`
+- `SNAPSHOT`
+- `HELP`
+- `EXIT`
+
+Those are rejected rather than being treated as half-supported behavior.

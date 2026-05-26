@@ -1,0 +1,206 @@
+---
+title: System Design
+description: Architecture, crate boundaries, and the main flow of requests through Vaylix.
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+## Core Stack
+
+`client -> transport -> TCP/TLS -> transport -> server -> engine`
+
+That line is the main architectural rule.
+
+## Repository Layout
+
+The workspace is split by responsibility. The tree below shows the main crates and the files that anchor each subsystem.
+
+<FileTree>
+
+- **Cargo.toml** workspace manifest and shared dependency graph
+
+- README.md project-level usage and development guidance
+
+- LLM.md canonical non-sensitive engineering context in the main repository
+
+- `.github`
+
+  - workflows/
+
+- crates
+
+  - **command** local command language and parsing
+
+    - Cargo.toml
+
+    - src
+
+      - **lib.rs**
+
+      - command.rs command definitions and variants
+
+      - lexer.rs tokenization for the REPL command language
+
+      - parser.rs option-aware command parsing
+
+      - error.rs command parse and validation errors
+
+  - **transport** shared wire protocol and framed I/O
+
+    - Cargo.toml
+
+    - src
+
+      - **lib.rs**
+
+      - frame.rs binary frame layout
+
+      - codec.rs request and response encoding and decoding
+
+      - opcode.rs protocol operation identifiers
+
+      - request.rs wire request structures
+
+      - response.rs wire response structures
+
+      - options.rs transport runtime options such as compression settings
+
+      - error.rs transport-specific error surface
+
+      - constants.rs protocol constants and limits
+
+  - **engine** state, durability, and recovery
+
+    - Cargo.toml
+
+    - src
+
+      - **lib.rs**
+
+      - config.rs engine-level runtime and durability options
+
+      - paths.rs on-disk path layout helpers
+
+      - error.rs engine error types
+
+      - engine
+
+        - … core state and execution internals
+
+      - store
+
+        - … WAL, snapshots, manifest, crypto, and persistence helpers
+
+  - **server** network runtime and request orchestration
+
+    - Cargo.toml
+
+    - src
+
+      - **main.rs** server entrypoint
+
+      - lib.rs
+
+      - server.rs Tokio listener, sessions, and request flow
+
+      - auth.rs mandatory authentication logic
+
+      - tls.rs TLS acceptor and certificate wiring
+
+      - metrics.rs runtime metrics collection
+
+      - audit.rs append-only audit logging
+
+      - args.rs CLI argument parsing
+
+      - error.rs server error types
+
+    - tests
+
+      - tcp_integration.rs network-level integration coverage
+
+  - **client** REPL and operator-facing UX
+
+    - Cargo.toml
+
+    - src
+
+      - **main.rs** client entrypoint
+
+      - client.rs interactive request loop and rendering
+
+      - args.rs URL and flag parsing
+
+      - helper.rs REPL help text and command support
+
+      - paths.rs local client path helpers
+
+      - error.rs client-side error types
+
+</FileTree>
+
+## Crate Responsibilities
+
+### `command`
+
+- command definitions
+- lexer
+- parser
+- command metadata
+
+### `transport`
+
+- frame format
+- request and response encoding
+- opcodes
+- checksums
+- compression flags
+- sync and async I/O helpers
+
+### `engine`
+
+- key/value state
+- expirations
+- WAL
+- snapshots
+- manifest
+- recovery
+- storage encryption
+
+### `server`
+
+- Tokio networking
+- TLS accept
+- authentication
+- per-session lifecycle
+- runtime guardrails
+- audit logging
+- engine runtime worker
+
+### `client`
+
+- REPL
+- connection strings
+- TLS client setup
+- output rendering
+
+## How the Pieces Connect
+
+The repository structure mirrors the runtime layering directly:
+
+- `client` turns user input into `command` values and sends them through `transport`
+- `transport` owns framing, opcodes, checksums, and message encoding for both sides
+- `server` accepts TCP or TLS connections, authenticates sessions, enforces guardrails, and routes decoded requests
+- `engine` applies state changes, maintains durability, and recovers from persisted storage
+
+That separation is the reason transport changes do not require socket parsing inside the engine, and engine changes do not require protocol logic inside storage code.
+
+## Why the Engine Worker Exists
+
+The current server accepts multiple client connections concurrently, but mutating engine work is still serialized through a dedicated engine worker. That gives:
+
+- deterministic single-node ordering
+- a clean place for atomic transaction application
+- less shared-state complexity in the async server path
+
+It is a deliberate single-node design, not a distributed concurrency model.

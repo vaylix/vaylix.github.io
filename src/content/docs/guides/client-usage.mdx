@@ -1,0 +1,57 @@
+---
+title: Client Usage
+description: Use the Vaylix REPL, output modes, connection strings, and compression settings effectively.
+---
+
+## Output Modes
+
+The client supports:
+
+- `plain`
+- `table`
+- `json`
+
+Example:
+
+```sh
+cargo run -p client -- --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=json'
+```
+
+## Local-Only Commands
+
+These commands never go over the wire:
+
+- `help`
+- `exit`
+
+That behavior keeps transport opcodes reserved for server-recognized operations only.
+
+## Transport Compression
+
+The client can compress outbound frames:
+
+```sh
+cargo run -p client -- \
+  --compression zstd \
+  --compression-threshold-bytes 256
+```
+
+Or by URL:
+
+```text
+vaylix://vaylix:vaylix@127.0.0.1:9173?compression=zstd
+```
+
+Compression only changes what the client sends. It is not negotiated today.
+
+## TLS Validation
+
+If you need a custom CA:
+
+```sh
+cargo run -p client -- \
+  --ssl \
+  --tls-ca-cert ./certs/ca.crt
+```
+
+`--tls-ca-cert` without `--ssl` is treated as invalid configuration.

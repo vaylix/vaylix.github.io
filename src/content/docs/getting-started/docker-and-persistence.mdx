@@ -1,0 +1,45 @@
+---
+title: Docker and Persistence
+description: Run Vaylix with a persistent data directory and understand what gets stored there.
+---
+
+## Default Data Directory
+
+The container and server default to:
+
+```text
+/var/lib/vaylix
+```
+
+Use that as the mounted volume path:
+
+```sh
+docker run \
+  -p 9173:9173 \
+  -v vaylix-data:/var/lib/vaylix \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=vaylix \
+  ghcr.io/<owner>/vaylix:latest
+```
+
+## What Lives in the Data Directory
+
+- `snapshot.bin`
+- `snapshot.bin.tmp`
+- `manifest.bin`
+- `manifest.bin.tmp`
+- `wal.log`
+- `keyring.bin`
+- `keyring.bin.tmp`
+- `audit.log`
+
+## Why the Volume Matters
+
+Without a mounted volume, you lose:
+
+- snapshots
+- WAL history
+- the server-managed storage keyring
+- audit logs
+
+That means a fresh ephemeral container would not be able to recover old encrypted data even if you copied only part of the directory. The data directory is the persistence boundary, not just the snapshot file.

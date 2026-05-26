@@ -1,0 +1,65 @@
+---
+title: CLI Reference
+description: Command-line flags for the Vaylix server and client binaries.
+---
+
+## Server Flags
+
+### Networking and Security
+
+| Flag | Meaning |
+| --- | --- |
+| `--bind` | Bind address. Default `127.0.0.1`. |
+| `--port` | Port. Default `9173`. |
+| `--ssl` | Enable TLS for server transport. |
+| `--tls-cert` | PEM certificate chain, required when TLS is enabled. |
+| `--tls-key` | PEM private key, required when TLS is enabled. |
+| `--user` | Required username. |
+| `--password` | Required password. |
+
+### Persistence and Runtime
+
+| Flag | Meaning |
+| --- | --- |
+| `--data-dir` | Persistent data directory. |
+| `--wal-sync` | `buffered`, `flush`, or `sync`. |
+| `--snapshot-interval-seconds` | Periodic background snapshots. |
+| `--expiration-sweep-interval-seconds` | TTL sweeper interval. |
+| `--idle-timeout-seconds` | Idle disconnect timeout. |
+| `--audit-log-path` | Override audit log file path. |
+
+### Guardrails and Compression
+
+| Flag | Meaning |
+| --- | --- |
+| `--max-connections` | Concurrent session cap. |
+| `--max-request-payload-bytes` | Max accepted payload size after framing. |
+| `--max-key-bytes` | Max key size. |
+| `--max-value-bytes` | Max value size. |
+| `--max-keys-per-batch` | Max key count in batch commands. |
+| `--max-transaction-queue-len` | Max queued commands inside `MULTI`. |
+| `--requests-per-second` | Sustained per-connection rate. |
+| `--request-burst` | Burst budget for rate limiting. |
+| `--compression` | `none` or `zstd` for outbound frames. |
+| `--compression-threshold-bytes` | Minimum payload size before compression is attempted. |
+
+## Client Flags
+
+| Flag | Meaning |
+| --- | --- |
+| `--url` | Full connection string, e.g. `vaylix://user:password@127.0.0.1:9173`. |
+| `--host` | Host when `--url` is not used. |
+| `--port` | Port when `--url` is not used. |
+| `--ssl` | Enable TLS. |
+| `--tls-ca-cert` | Custom CA bundle for server verification. |
+| `--user` | Username override. |
+| `--password` | Password override. |
+| `--output` | `plain`, `table`, or `json`. |
+| `--compression` | `none` or `zstd` for outbound frames. |
+| `--compression-threshold-bytes` | Minimum payload size before compression is attempted. |
+
+## Connection String Example
+
+```text
+vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true&output=json&compression=zstd
+```

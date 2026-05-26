@@ -1,0 +1,39 @@
+---
+title: Limits and Runtime Guards
+description: Current quotas, rate limiting, timeout controls, and their operational purpose.
+---
+
+## Current Guardrails
+
+The server exposes guardrails for:
+
+- request payload size
+- key size
+- value size
+- key count in batch commands
+- transaction queue length
+- sustained request rate
+- burst request rate
+- idle connection lifetime
+
+## Why They Exist
+
+These controls reduce:
+
+- accidental oversized requests
+- noisy-client impact
+- unbounded queued transaction memory growth
+- idle connection leakage
+
+## What They Are Not
+
+They are not a full platform-wide abuse defense strategy.
+
+Missing areas still include:
+
+- global rate limits
+- per-user quotas
+- IP reputation or ban lists
+- cluster-wide admission control
+
+For the current single-node server, they are still worth using because they define predictable per-session behavior.

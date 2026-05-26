@@ -1,0 +1,277 @@
+---
+import { Code } from '@astrojs/starlight/components';
+import {
+  LuArrowRight,
+  LuBookOpen,
+  LuBoxes,
+  LuFileStack,
+  LuGitBranch,
+  LuLock,
+  LuSearch,
+  LuServer,
+  LuSquareTerminal,
+  LuWorkflow,
+} from 'react-icons/lu';
+import { FaGithub } from 'react-icons/fa6';
+
+const sections = [
+  {
+    href: '/getting-started/install-and-build/',
+    title: 'Install and build',
+    description: 'Compile the Rust workspace, understand the crate layout, and get the docs aligned with the codebase.',
+    icon: LuSquareTerminal,
+  },
+  {
+    href: '/getting-started/run-local/',
+    title: 'Run a local node',
+    description: 'Start the server, connect with the client, and verify auth, TLS, and the transport boundary.',
+    icon: LuServer,
+  },
+  {
+    href: '/reference/wire-protocol/',
+    title: 'Inspect the wire protocol',
+    description: 'Review framed requests, UUID request IDs, structured errors, compression flags, and response semantics.',
+    icon: LuWorkflow,
+  },
+  {
+    href: '/reference/persistence-and-recovery/',
+    title: 'Understand persistence',
+    description: 'Learn snapshot flow, WAL replay, encrypted-at-rest storage, recovery ordering, and rotation behavior.',
+    icon: LuFileStack,
+  },
+  {
+    href: '/reference/security-model/',
+    title: 'Review the security model',
+    description: 'Authentication, optional TLS, audit logging, and current operational boundaries are documented here.',
+    icon: LuLock,
+  },
+  {
+    href: '/architecture/system-design/',
+    title: 'Read the architecture',
+    description: 'See the transport-first layering and the constraints that keep engine, server, and client concerns separated.',
+    icon: LuBoxes,
+  },
+];
+
+const facts = [
+  'Single-node key/value engine with a string-to-string model',
+  'Transport shared by client and server, with framed binary messages',
+  'Tokio-based multi-client server with authenticated sessions',
+  'WAL plus snapshot durability, storage keyring management, and audit logging',
+];
+
+const boundaries = [
+  'Replication and sharding are roadmap items, not implemented features',
+  'Transactions are atomic on a single node, not distributed ACID',
+  'TLS is available but not mandatory by default',
+  'Operational guidance should stay aligned with the maintained project context page',
+];
+
+const quickStart = `cargo build --workspace
+cargo run -p server -- --host 127.0.0.1 --port 7000
+cargo run -p client -- --url vaylix://vaylix:vaylix@127.0.0.1:7000
+
+vaylix> ping
+PONG
+vaylix> set app:mode production
+OK
+vaylix> get app:mode
+production`;
+---
+
+<div class="not-prose space-y-8">
+  <section
+    aria-labelledby="home-heading"
+    class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-2xl shadow-black/20 ring-1 ring-emerald-500/10 backdrop-blur"
+  >
+    <div class="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)] lg:px-10 lg:py-10">
+      <div class="space-y-6">
+        <div class="flex flex-wrap items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.22em] text-zinc-400">
+          <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
+            Vaylix Docs
+          </span>
+          <span>Transport-first database</span>
+          <span aria-hidden="true" class="text-zinc-600">/</span>
+          <span>Rust workspace</span>
+        </div>
+
+        <div class="space-y-4">
+          <h1 id="home-heading" class="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+            Technical documentation for operating and understanding Vaylix.
+          </h1>
+          <p class="max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
+            Use this documentation to build, run, operate, and understand Vaylix. It covers the
+            current system as implemented today: a single-node Rust key/value database with a
+            transport-first architecture, durable persistence, and clearly defined operational
+            boundaries.
+          </p>
+        </div>
+
+        <nav aria-label="Primary documentation entry points" class="flex flex-wrap gap-3">
+          <a
+            href="/getting-started/install-and-build/"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            Get started
+            <LuArrowRight className="size-4" aria-hidden="true" />
+          </a>
+          <a
+            href="/reference/project-context/"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            Read the project context
+            <LuBookOpen className="size-4" aria-hidden="true" />
+          </a>
+          <a
+            href="https://github.com/vaylix/vaylix"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-zinc-300 transition hover:border-emerald-400/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open the Vaylix GitHub repository"
+          >
+            <FaGithub className="size-4" aria-hidden="true" />
+            GitHub
+          </a>
+        </nav>
+      </div>
+
+      <aside
+        aria-label="Current deployment profile"
+        class="rounded-2xl border border-white/10 bg-black/30 p-5"
+      >
+        <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+          <LuSearch className="size-4 text-emerald-300" aria-hidden="true" />
+          Deployment profile
+        </div>
+        <dl class="space-y-4 text-sm">
+          <div class="space-y-1">
+            <dt class="text-zinc-500">Repository</dt>
+            <dd class="font-medium text-zinc-100">vaylix/vaylix</dd>
+          </div>
+          <div class="space-y-1">
+            <dt class="text-zinc-500">Primary runtime</dt>
+            <dd class="font-medium text-zinc-100">Tokio multi-client server</dd>
+          </div>
+          <div class="space-y-1">
+            <dt class="text-zinc-500">Storage model</dt>
+            <dd class="font-medium text-zinc-100">WAL + snapshot recovery</dd>
+          </div>
+          <div class="space-y-1">
+            <dt class="text-zinc-500">Transport</dt>
+            <dd class="font-medium text-zinc-100">Framed binary over TCP/TLS</dd>
+          </div>
+          <div class="space-y-1">
+            <dt class="text-zinc-500">Request identity</dt>
+            <dd class="font-medium text-zinc-100">UUID-based request IDs</dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <section
+    aria-labelledby="quickstart-heading"
+    class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.78fr)]"
+  >
+    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+        <LuSquareTerminal className="size-4 text-emerald-300" aria-hidden="true" />
+        <h2 id="quickstart-heading">Quick start</h2>
+      </div>
+      <div class="overflow-hidden rounded-xl border border-white/10 bg-black/50">
+        <Code code={quickStart} lang="bash" />
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+        <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
+        <h2>Read this next</h2>
+      </div>
+      <ol class="space-y-3 text-sm leading-6 text-zinc-300">
+        <li>
+          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/why-vaylix/">
+            Why Vaylix
+          </a>
+          <span class="block text-zinc-500">Scope, intent, and design posture.</span>
+        </li>
+        <li>
+          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/getting-started/run-local/">
+            Run server and client
+          </a>
+          <span class="block text-zinc-500">Local flow, credentials, and URL usage.</span>
+        </li>
+        <li>
+          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/reference/cli-reference/">
+            CLI reference
+          </a>
+          <span class="block text-zinc-500">All current flags and command-line semantics.</span>
+        </li>
+        <li>
+          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/architecture/system-design/">
+            System design
+          </a>
+          <span class="block text-zinc-500">Layering, engine isolation, and worker model.</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section aria-labelledby="docs-sections-heading" class="space-y-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+      <LuBookOpen className="size-4 text-emerald-300" aria-hidden="true" />
+      <h2 id="docs-sections-heading">Documentation map</h2>
+    </div>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {sections.map(({ href, title, description, icon: Icon }) => (
+        <a
+          href={href}
+          class="group rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 transition hover:border-emerald-400/25 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        >
+          <div class="mb-4 inline-flex rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
+            <Icon className="size-5" aria-hidden="true" />
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-base font-semibold text-white">{title}</h3>
+              <LuArrowRight className="size-4 text-zinc-500 transition group-hover:text-emerald-300" aria-hidden="true" />
+            </div>
+            <p class="text-sm leading-6 text-zinc-400">{description}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section aria-labelledby="status-heading" class="grid gap-6 xl:grid-cols-2">
+    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+        <LuServer className="size-4 text-emerald-300" aria-hidden="true" />
+        <h2 id="status-heading">Current implementation</h2>
+      </div>
+      <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+        {facts.map((item) => (
+          <li class="flex gap-3">
+            <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+        <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
+        <h2>Boundaries to keep in mind</h2>
+      </div>
+      <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+        {boundaries.map((item) => (
+          <li class="flex gap-3">
+            <span class="mt-2 size-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true"></span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</div>

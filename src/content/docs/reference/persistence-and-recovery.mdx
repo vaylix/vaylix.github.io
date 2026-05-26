@@ -1,0 +1,52 @@
+---
+title: Persistence and Recovery
+description: Snapshots, WAL replay, manifest metadata, storage encryption, and recovery behavior.
+---
+
+## Persistence Model
+
+Vaylix uses:
+
+- encrypted snapshots
+- a write-ahead log
+- a manifest to describe the durable snapshot baseline
+
+## Snapshot Flow
+
+1. Purge expired keys.
+2. Optionally rotate the active storage key.
+3. Serialize the in-memory state.
+4. Encrypt the snapshot payload.
+5. Write a temp snapshot file.
+6. `fsync` the temp file.
+7. Atomically rename it into place.
+8. Write the manifest.
+9. `fsync` the manifest.
+10. Truncate the WAL.
+
+## Recovery Flow
+
+1. Load or create the keyring.
+2. Load the manifest.
+3. Verify the snapshot checksum.
+4. Decrypt and deserialize the snapshot.
+5. Replay WAL entries on top of it.
+
+## Storage Keyring
+
+At-rest encryption is server-managed.
+
+- there is no user-facing `--data-key` flag
+- new data is encrypted with the active storage key
+- older data can still be decrypted with retained previous keys
+
+## WAL Behavior
+
+Each WAL entry is:
+
+- serialized
+- optionally encrypted
+- checksummed
+- appended using the configured sync policy
+
+The current engine treats a WAL entry as the atomic durability unit for committed changes.
