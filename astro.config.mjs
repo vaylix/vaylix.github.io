@@ -15,7 +15,7 @@ export default defineConfig({
     starlight({
       title: 'Vaylix Docs',
       description:
-        'Documentation for Vaylix, a transport-first Rust key/value database with framed binary transport, TLS, WAL plus snapshot durability, audit logging, and single-node atomic transactions.',
+        'Documentation for Vaylix, a transport-first Rust key/value database with framed binary transport, optional TLS/mTLS, default-on compression, WAL plus snapshot durability, audit logging, and single-node atomic transactions.',
       favicon: '/favicon.ico',
       logo: {
         light: './src/assets/vaylix-mark.svg',
@@ -66,6 +66,7 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'CLI Reference', slug: 'reference/cli-reference' },
+            { label: 'Command Reference', slug: 'reference/commands' },
             { label: 'Wire Protocol', slug: 'reference/wire-protocol' },
             { label: 'Persistence and Recovery', slug: 'reference/persistence-and-recovery' },
             { label: 'Security Model', slug: 'reference/security-model' },
@@ -86,7 +87,7 @@ export default defineConfig({
           attrs: {
             name: 'keywords',
             content:
-              'Vaylix, database, Rust database, key value store, framed binary protocol, WAL, snapshot, TLS, audit logging, documentation'
+              'Vaylix, database, Rust database, key value store, framed binary protocol, WAL, snapshot, optional TLS, mTLS, transport compression, audit logging, documentation'
           }
         },
         {

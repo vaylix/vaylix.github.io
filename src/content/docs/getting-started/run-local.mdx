@@ -16,7 +16,8 @@ cargo run -p server -- \
 What this gives you:
 
 - bound server on `127.0.0.1:9173`
-- mandatory authentication
+- authentication enabled by default
+- outbound zstd frame compression enabled by default
 - default data directory if `--data-dir` is omitted
 - server-managed storage keyring
 
@@ -45,6 +46,9 @@ Supported URL query options:
 - `ssl=true`
 - `output=plain|table|json`
 - `ca_cert=/path/to/ca.pem`
+- `client_cert=/path/to/client.crt`
+- `client_key=/path/to/client.key`
+- `auth=false`
 - `compression=none|zstd`
 
 ## First Commands
@@ -84,4 +88,32 @@ Client:
 cargo run -p client -- \
   --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true' \
   --tls-ca-cert ./certs/ca.crt
+```
+
+Plain TCP is the default so local development works without certificates. Production-facing deployments should enable TLS and provide a certificate chain and private key on the server.
+
+## mTLS Example
+
+mTLS adds a client certificate requirement to TLS. It does not replace username/password authentication.
+
+Server:
+
+```sh
+cargo run -p server -- \
+  --bind 127.0.0.1 \
+  --port 9173 \
+  --ssl \
+  --tls-cert ./certs/server.crt \
+  --tls-key ./certs/server.key \
+  --tls-client-ca ./certs/client-ca.crt
+```
+
+Client:
+
+```sh
+cargo run -p client -- \
+  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true' \
+  --tls-ca-cert ./certs/server-ca.crt \
+  --tls-client-cert ./certs/client.crt \
+  --tls-client-key ./certs/client.key
 ```

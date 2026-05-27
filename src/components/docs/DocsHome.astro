@@ -18,20 +18,26 @@ const sections = [
   {
     href: '/getting-started/install-and-build/',
     title: 'Install and build',
-    description: 'Compile the Rust workspace, understand the crate layout, and get the docs aligned with the codebase.',
+    description: 'Compile the Rust workspace and validate the server, client, engine, transport, and command crates.',
     icon: LuSquareTerminal,
   },
   {
     href: '/getting-started/run-local/',
     title: 'Run a local node',
-    description: 'Start the server, connect with the client, and verify auth, TLS, and the transport boundary.',
+    description: 'Start the server, connect with the client, and verify auth, compression, optional TLS/mTLS, and command flow.',
     icon: LuServer,
   },
   {
     href: '/reference/wire-protocol/',
     title: 'Inspect the wire protocol',
-    description: 'Review framed requests, UUID request IDs, structured errors, compression flags, and response semantics.',
+    description: 'Review framed requests, UUID request IDs, structured errors, checksums, compression flags, and responses.',
     icon: LuWorkflow,
+  },
+  {
+    href: '/reference/commands/',
+    title: 'Use the command set',
+    description: 'Check supported commands, syntax, aliases, transaction boundaries, and current single-node semantics.',
+    icon: LuBookOpen,
   },
   {
     href: '/reference/persistence-and-recovery/',
@@ -42,7 +48,7 @@ const sections = [
   {
     href: '/reference/security-model/',
     title: 'Review the security model',
-    description: 'Authentication, optional TLS, audit logging, and current operational boundaries are documented here.',
+    description: 'Default-on auth, optional TLS/mTLS, encrypted persistence, audit logging, and current security boundaries.',
     icon: LuLock,
   },
   {
@@ -56,20 +62,23 @@ const sections = [
 const facts = [
   'Single-node key/value engine with a string-to-string model',
   'Transport shared by client and server, with framed binary messages',
-  'Tokio-based multi-client server with authenticated sessions',
-  'WAL plus snapshot durability, storage keyring management, and audit logging',
+  'Tokio-based multi-client server with auth enabled by default',
+  'Default-on zstd frame compression with explicit opt-out flags',
+  'WAL plus encrypted snapshot durability, storage keyring management, and audit logging',
 ];
 
 const boundaries = [
   'Replication and sharding are roadmap items, not implemented features',
   'Transactions are atomic on a single node, not distributed ACID',
-  'TLS is available but not mandatory by default',
+  'TLS is available with --ssl, and mTLS is enabled with --tls-client-ca',
   'Operational guidance should stay aligned with the maintained project context page',
 ];
 
 const quickStart = `cargo build --workspace
-cargo run -p server -- --host 127.0.0.1 --port 7000
-cargo run -p client -- --url vaylix://vaylix:vaylix@127.0.0.1:7000
+cargo run -p server -- \\
+  --bind 127.0.0.1 --port 9173
+cargo run -p client -- \\
+  --url vaylix://vaylix:vaylix@127.0.0.1:9173
 
 vaylix> ping
 PONG
@@ -79,14 +88,14 @@ vaylix> get app:mode
 production`;
 ---
 
-<div class="not-prose space-y-8">
+<div class="not-prose max-w-full space-y-8 overflow-x-clip">
   <section
     aria-labelledby="home-heading"
-    class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-2xl shadow-black/20 ring-1 ring-emerald-500/10 backdrop-blur"
+    class="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-2xl shadow-black/20 ring-1 ring-emerald-500/10 backdrop-blur"
   >
-    <div class="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)] lg:px-10 lg:py-10">
-      <div class="space-y-6">
-        <div class="flex flex-wrap items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.22em] text-zinc-400">
+    <div class="grid max-w-full gap-8 px-5 py-7 sm:px-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.9fr)] lg:px-10 lg:py-10">
+      <div class="min-w-0 space-y-6">
+        <div class="flex max-w-full flex-wrap items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-zinc-400 sm:tracking-[0.22em]">
           <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
             Vaylix Docs
           </span>
@@ -96,7 +105,7 @@ production`;
         </div>
 
         <div class="space-y-4">
-          <h1 id="home-heading" class="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+          <h1 id="home-heading" class="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
             Technical documentation for operating and understanding Vaylix.
           </h1>
           <p class="max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
@@ -137,7 +146,7 @@ production`;
 
       <aside
         aria-label="Current deployment profile"
-        class="rounded-2xl border border-white/10 bg-black/30 p-5"
+        class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-black/30 p-5"
       >
         <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
           <LuSearch className="size-4 text-emerald-300" aria-hidden="true" />
@@ -171,19 +180,19 @@ production`;
 
   <section
     aria-labelledby="quickstart-heading"
-    class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.78fr)]"
+    class="grid max-w-full gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.78fr)]"
   >
-    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6">
       <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
         <LuSquareTerminal className="size-4 text-emerald-300" aria-hidden="true" />
         <h2 id="quickstart-heading">Quick start</h2>
       </div>
-      <div class="overflow-hidden rounded-xl border border-white/10 bg-black/50">
+      <div class="max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/50">
         <Code code={quickStart} lang="bash" />
       </div>
     </div>
 
-    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6">
       <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
         <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
         <h2>Read this next</h2>
@@ -222,11 +231,11 @@ production`;
       <LuBookOpen className="size-4 text-emerald-300" aria-hidden="true" />
       <h2 id="docs-sections-heading">Documentation map</h2>
     </div>
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div class="grid max-w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
       {sections.map(({ href, title, description, icon: Icon }) => (
         <a
           href={href}
-          class="group rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 transition hover:border-emerald-400/25 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          class="group min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 transition hover:border-emerald-400/25 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
           <div class="mb-4 inline-flex rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
             <Icon className="size-5" aria-hidden="true" />
@@ -243,8 +252,8 @@ production`;
     </div>
   </section>
 
-  <section aria-labelledby="status-heading" class="grid gap-6 xl:grid-cols-2">
-    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+  <section aria-labelledby="status-heading" class="grid max-w-full gap-6 xl:grid-cols-2">
+    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6">
       <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
         <LuServer className="size-4 text-emerald-300" aria-hidden="true" />
         <h2 id="status-heading">Current implementation</h2>
@@ -259,7 +268,7 @@ production`;
       </ul>
     </div>
 
-    <div class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6">
       <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
         <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
         <h2>Boundaries to keep in mind</h2>

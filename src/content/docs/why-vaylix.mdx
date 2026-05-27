@@ -21,7 +21,7 @@ The transport owns:
 - checksums
 - opcodes
 - request and response encoding
-- optional frame compression
+- default-on outbound frame compression
 
 That separation is what allows the current client and server to share one wire layer instead of copying binary parsing logic around the codebase.
 
@@ -40,8 +40,10 @@ Those are the kinds of decisions that make future cluster traffic possible witho
 
 The shipped implementation already treats operational behavior as first-class:
 
-- TLS support
-- mandatory auth
+- TLS support with explicit opt-in
+- mTLS support with client-certificate verification
+- auth enabled by default
+- zstd frame compression enabled by default
 - encrypted-at-rest persistence
 - audit logging
 - request quotas and rate limiting

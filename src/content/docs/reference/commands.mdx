@@ -1,0 +1,92 @@
+---
+title: Command Reference
+description: User-facing Vaylix commands, syntax, and current single-node semantics.
+---
+
+Vaylix commands are parsed by the shared `command` crate before being encoded into transport requests. The client keeps `help` and `exit` local; server-recognized commands are sent over the framed binary transport.
+
+## Connection and Diagnostics
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `AUTH` | `auth USERNAME PASSWORD` | Authenticates the current connection when auth is enabled. |
+| `PING` | `ping [message]` | Returns `PONG` or the supplied message. |
+| `INFO` | `info` | Returns engine and storage metadata as key/value fields. |
+| `METRICS` | `metrics` | Returns server runtime metrics as key/value fields. |
+
+## String Keys
+
+The current data model is `String -> String`.
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `GET` | `get KEY` | Reads a value. Missing keys return `NOT_FOUND`. |
+| `SET` | `set KEY VALUE [nx\|xx] [ex SECONDS\|px MILLIS] [keepttl] [get]` | Writes a value with optional condition, expiration, TTL preservation, and previous-value return. |
+| `SETNX` | `setnx KEY VALUE` | Writes only when the key does not already exist. |
+| `GETDEL` | `getdel KEY` | Reads and deletes a key atomically. |
+| `GETEX` | `getex KEY [ex SECONDS\|px MILLIS\|persist]` | Reads a key and updates or clears its expiration. |
+| `MGET` | `mget KEY [KEY ...]` | Reads multiple keys. |
+| `MSET` | `mset KEY VALUE [KEY VALUE ...]` | Writes multiple key/value pairs. |
+| `DEL` | `del KEY [KEY ...]` | Deletes one or more keys and returns a count. |
+| `DELETE` | `delete KEY [KEY ...]` | Alias for `DEL`. |
+| `EXISTS` | `exists KEY` | Returns whether a key exists. |
+
+## Numeric Operations
+
+Numeric operations treat the stored value as a signed integer encoded as a string.
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `INCR` | `incr KEY` | Increments the integer value and returns the new integer. |
+| `DECR` | `decr KEY` | Decrements the integer value and returns the new integer. |
+
+If a value is not parseable as an integer, the command returns a structured error.
+
+## Expiration
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `EXPIRE` | `expire KEY SECONDS` | Sets a key TTL in whole seconds. |
+| `TTL` | `ttl KEY` | Returns the remaining TTL using the engine's integer TTL convention. |
+| `PERSIST` | `persist KEY` | Removes a key's expiration if present. |
+
+Expired keys are purged during normal command paths, background sweeps, and snapshot creation.
+
+## Rename and Scan
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `RENAME` | `rename SOURCE DESTINATION` | Renames a key, replacing the destination if needed. |
+| `RENAMENX` | `renamenx SOURCE DESTINATION` | Renames only when the destination does not exist. |
+| `SCAN` | `scan CURSOR [match PATTERN] [count N]` | Returns a cursor page of keys. |
+
+## Database Introspection and Maintenance
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `DBSIZE` | `dbsize` | Returns the live key count. |
+| `COUNT` | `count` | Alias-style count command for the live key count. |
+| `LIST` | `list` | Returns live key/value entries. |
+| `CLEAR` | `clear` | Clears all keys. |
+| `FLUSHDB` | `flushdb` | Alias for clearing the current database. |
+| `SAVE` | `save` | Writes a snapshot and rotates/truncates WAL state through the engine snapshot path. |
+| `SNAPSHOT` | `snapshot` | Alias-style snapshot command. |
+
+## Transactions
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `MULTI` | `multi` | Starts queueing commands for the current session. |
+| `EXEC` | `exec` | Applies the queued commands as one single-node atomic batch if every command succeeds. |
+| `DISCARD` | `discard` | Drops the queued transaction. |
+
+The current transaction model is single-node and serialized through the engine worker. It is not MVCC, distributed, or replication-aware.
+
+## Client-Local Commands
+
+| Command | Syntax | Behavior |
+| --- | --- | --- |
+| `HELP` | `help` | Prints local client help. |
+| `EXIT` | `exit` | Leaves the REPL. |
+
+These commands are intentionally not sent to the server.

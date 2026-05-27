@@ -41,14 +41,17 @@ Responses:
 
 ## Compression
 
-Current outbound compression mode:
+Current outbound compression behavior:
 
-- `none`
-- `zstd`
+- zstd is enabled by default for outbound frames in the server and client binaries
+- `--disable-compression` disables outbound compression on that process
+- URL query `compression=none|zstd` can configure the client connection
 
 Compression is frame-level, not payload-field-level. The checksum covers the compressed bytes that were actually transmitted.
 
 The reader checks the frame flag and transparently decompresses before request or response decoding.
+
+Compression is not negotiated yet. Mixed-version or custom clients should set matching expectations explicitly.
 
 ## Status Codes
 

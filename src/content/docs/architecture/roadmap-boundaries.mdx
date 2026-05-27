@@ -7,12 +7,14 @@ description: What is implemented today, what is explicitly not, and why the docs
 
 - single-node key/value database
 - framed binary transport
-- optional TLS
-- mandatory auth
+- optional TLS and mTLS
+- authentication enabled by default with an explicit local/trusted disable flag
 - encrypted snapshot + WAL durability
 - audit log
-- optional zstd frame compression
+- zstd frame compression enabled by default with an explicit disable flag
 - atomic single-node `EXEC`
+- server-managed storage keyring
+- RustSec dependency audit in CI
 
 ## Not Implemented Today
 
@@ -22,6 +24,8 @@ description: What is implemented today, what is explicitly not, and why the docs
 - MVCC
 - formal isolation levels
 - multi-user ACLs
+- online backup/restore tooling
+- TLS certificate automation or rotation
 
 ## Why This Matters
 
@@ -32,5 +36,6 @@ The documentation should follow the same rule:
 - document shipped behavior as shipped behavior
 - document roadmap constraints as roadmap constraints
 - avoid vague marketing language that hides technical gaps
+- do not describe opt-in controls as mandatory controls
 
 That honesty is useful to contributors, operators, and anyone evaluating the project.

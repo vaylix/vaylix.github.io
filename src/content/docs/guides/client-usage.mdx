@@ -1,6 +1,6 @@
 ---
 title: Client Usage
-description: Use the Vaylix REPL, output modes, connection strings, and compression settings effectively.
+description: Use the Vaylix REPL, output modes, connection strings, TLS, and default transport behavior.
 ---
 
 ## Output Modes
@@ -17,6 +17,8 @@ Example:
 cargo run -p client -- --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=json'
 ```
 
+CLI flags override values parsed from the URL when both are provided.
+
 ## Local-Only Commands
 
 These commands never go over the wire:
@@ -26,25 +28,59 @@ These commands never go over the wire:
 
 That behavior keeps transport opcodes reserved for server-recognized operations only.
 
-## Transport Compression
+## Authentication
 
-The client can compress outbound frames:
+Authentication is enabled by default. The development defaults are:
+
+- username: `vaylix`
+- password: `vaylix`
+
+Use URL credentials:
 
 ```sh
 cargo run -p client -- \
-  --compression zstd \
-  --compression-threshold-bytes 256
+  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
 ```
 
-Or by URL:
+Or pass credentials explicitly:
+
+```sh
+cargo run -p client -- \
+  --host 127.0.0.1 \
+  --port 9173 \
+  --user vaylix \
+  --password vaylix
+```
+
+`--disable-auth` is only for trusted local test servers that were also started with auth disabled.
+
+## Transport Compression
+
+Outbound frame compression is enabled by default with zstd.
+
+Disable it only when connecting to a compatible local/test server where compression was also disabled or when debugging the wire format:
+
+```sh
+cargo run -p client -- \
+  --disable-compression
+```
+
+URL form:
 
 ```text
-vaylix://vaylix:vaylix@127.0.0.1:9173?compression=zstd
+vaylix://vaylix:vaylix@127.0.0.1:9173?compression=none
 ```
 
-Compression only changes what the client sends. It is not negotiated today.
+Compression only changes what the client sends. It is not negotiated today; readers decompress frames based on the frame flag.
 
-## TLS Validation
+## TLS and mTLS
+
+The client uses plaintext TCP by default. Enable TLS with `--ssl` or `ssl=true` in the URL:
+
+```sh
+cargo run -p client -- \
+  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true'
+```
 
 If you need a custom CA:
 
@@ -55,3 +91,21 @@ cargo run -p client -- \
 ```
 
 `--tls-ca-cert` without `--ssl` is treated as invalid configuration.
+
+If the server requires mTLS, provide both a client certificate chain and its matching private key:
+
+```sh
+cargo run -p client -- \
+  --ssl \
+  --tls-ca-cert ./certs/server-ca.crt \
+  --tls-client-cert ./certs/client.crt \
+  --tls-client-key ./certs/client.key
+```
+
+URL form is also supported:
+
+```text
+vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true&client_cert=/certs/client.crt&client_key=/certs/client.key
+```
+
+Client certificate options require TLS and must be provided as a pair.

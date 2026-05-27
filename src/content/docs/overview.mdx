@@ -12,7 +12,9 @@ This site documents the implementation as it exists today, not an aspirational p
 - single-node deployment model
 - string-to-string data model
 - framed binary transport shared by client and server
-- authenticated access with optional TLS
+- authenticated access enabled by default
+- optional TLS and mTLS transport
+- default-on outbound zstd frame compression
 - snapshot plus WAL durability
 - encrypted-at-rest persistence and audit logging
 

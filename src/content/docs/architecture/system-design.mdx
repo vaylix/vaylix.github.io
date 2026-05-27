@@ -89,7 +89,9 @@ The workspace is split by responsibility. The tree below shows the main crates a
 
       - store
 
-        - … WAL, snapshots, manifest, crypto, and persistence helpers
+        - binary.rs MessagePack persistence serialization helpers
+
+        - … WAL, snapshots, manifest, crypto, keyring, and persistence helpers
 
   - **server** network runtime and request orchestration
 
@@ -103,9 +105,9 @@ The workspace is split by responsibility. The tree below shows the main crates a
 
       - server.rs Tokio listener, sessions, and request flow
 
-      - auth.rs mandatory authentication logic
+      - auth.rs default-on authentication logic
 
-      - tls.rs TLS acceptor and certificate wiring
+      - tls.rs TLS/mTLS acceptor and certificate wiring
 
       - metrics.rs runtime metrics collection
 
@@ -170,7 +172,7 @@ The workspace is split by responsibility. The tree below shows the main crates a
 ### `server`
 
 - Tokio networking
-- TLS accept
+- TLS/mTLS accept
 - authentication
 - per-session lifecycle
 - runtime guardrails
@@ -181,7 +183,7 @@ The workspace is split by responsibility. The tree below shows the main crates a
 
 - REPL
 - connection strings
-- TLS client setup
+- TLS/mTLS client setup
 - output rendering
 
 ## How the Pieces Connect
@@ -190,7 +192,7 @@ The repository structure mirrors the runtime layering directly:
 
 - `client` turns user input into `command` values and sends them through `transport`
 - `transport` owns framing, opcodes, checksums, and message encoding for both sides
-- `server` accepts TCP or TLS connections, authenticates sessions, enforces guardrails, and routes decoded requests
+- `server` accepts TCP, TLS, or mTLS connections, authenticates sessions by default, enforces guardrails, and routes decoded requests
 - `engine` applies state changes, maintains durability, and recovers from persisted storage
 
 That separation is the reason transport changes do not require socket parsing inside the engine, and engine changes do not require protocol logic inside storage code.
@@ -204,3 +206,15 @@ The current server accepts multiple client connections concurrently, but mutatin
 - less shared-state complexity in the async server path
 
 It is a deliberate single-node design, not a distributed concurrency model.
+
+## Runtime Defaults
+
+Current binaries default to:
+
+- plaintext TCP unless `--ssl` is enabled
+- mTLS is required only when the server is configured with `--tls-client-ca`
+- auth enabled unless `--disable-auth` is used for trusted local testing
+- outbound zstd frame compression enabled unless `--disable-compression` is used
+- encrypted persistence through a server-managed keyring
+
+Replication, sharding, distributed transactions, and cluster membership are roadmap constraints, not implemented runtime features.

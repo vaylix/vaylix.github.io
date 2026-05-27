@@ -5,7 +5,7 @@ description: Authentication, TLS, at-rest encryption, audit logging, and the cur
 
 ## Authentication
 
-Authentication is mandatory.
+Authentication is enabled by default.
 
 Development defaults:
 
@@ -14,31 +14,44 @@ Development defaults:
 
 These are convenience defaults, not production credentials.
 
+`--disable-auth` exists for trusted local tests. When auth is disabled on the server, commands execute without an `AUTH` handshake. Do not use that mode for exposed deployments.
+
 ## TLS
 
-TLS is supported and optional.
+TLS is supported and disabled by default.
 
 Server requirements:
 
 - `--ssl`
 - `--tls-cert`
 - `--tls-key`
+- `--tls-client-ca` to require client certificates for mTLS
 
 Client options:
 
 - `--ssl`
 - `--tls-ca-cert`
+- `--tls-client-cert`
+- `--tls-client-key`
 - `?ssl=true` in URL form
+
+mTLS is additive to application authentication. When the server is started with `--tls-client-ca`, the TLS handshake requires a client certificate chaining to that CA. The username/password `AUTH` flow still applies unless auth was explicitly disabled for trusted testing.
 
 ## At-Rest Encryption
 
-Snapshots and WAL payloads are encrypted at rest using a server-managed keyring.
+Snapshots, WAL entries, manifest metadata, and the keyring format are encrypted or integrity-protected at rest using a server-managed keyring.
 
 Important property:
 
 - storage encryption is separate from the auth password
 
 That keeps authentication concerns and persistence-key management from collapsing into one weak configuration surface.
+
+Storage format version `2` uses MessagePack-based engine serialization inside the encrypted persistence files. Older pre-v2 storage is not auto-migrated; recovery should fail closed instead of silently reading incompatible files.
+
+## Transport Compression
+
+Outbound zstd frame compression is enabled by default for the server and client binaries. Compression is not a substitute for TLS. It changes frame encoding only; confidentiality still requires TLS.
 
 ## Audit Logging
 

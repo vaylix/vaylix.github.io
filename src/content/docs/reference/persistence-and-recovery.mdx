@@ -10,6 +10,8 @@ Vaylix uses:
 - encrypted snapshots
 - a write-ahead log
 - a manifest to describe the durable snapshot baseline
+- storage format version `2`
+- MessagePack-based engine serialization inside encrypted persistence files
 
 ## Snapshot Flow
 
@@ -28,9 +30,9 @@ Vaylix uses:
 
 1. Load or create the keyring.
 2. Load the manifest.
-3. Verify the snapshot checksum.
-4. Decrypt and deserialize the snapshot.
-5. Replay WAL entries on top of it.
+3. Verify and decrypt the snapshot.
+4. Deserialize the snapshot state.
+5. Replay and verify WAL entries on top of it.
 
 ## Storage Keyring
 
@@ -39,14 +41,17 @@ At-rest encryption is server-managed.
 - there is no user-facing `--data-key` flag
 - new data is encrypted with the active storage key
 - older data can still be decrypted with retained previous keys
+- recovery fails closed on key mismatch, authentication failure, checksum mismatch, or unsupported storage format
 
 ## WAL Behavior
 
 Each WAL entry is:
 
 - serialized
-- optionally encrypted
+- encrypted
 - checksummed
 - appended using the configured sync policy
 
 The current engine treats a WAL entry as the atomic durability unit for committed changes.
+
+Older pre-version-2 storage files are not migrated automatically. Operators should treat the full data directory as one unit because snapshots, WAL, manifest, and keyring files are interdependent.

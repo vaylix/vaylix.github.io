@@ -11,6 +11,8 @@ const containerClass = isHomePage ? 'sl-container sl-container-home' : 'sl-conta
   @layer starlight.core {
     .content-panel {
       padding: 1.5rem var(--sl-content-pad-x);
+      max-width: 100%;
+      overflow-x: clip;
     }
 
     .content-panel + .content-panel {
@@ -19,10 +21,12 @@ const containerClass = isHomePage ? 'sl-container sl-container-home' : 'sl-conta
 
     .sl-container {
       max-width: var(--sl-content-width);
+      min-width: 0;
+      width: 100%;
     }
 
     .sl-container-home {
-      max-width: min(84rem, calc(100vw - 3rem));
+      max-width: min(84rem, 100%);
     }
 
     .sl-container > :global(* + *) {

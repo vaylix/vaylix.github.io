@@ -11,11 +11,13 @@ description: Command-line flags for the Vaylix server and client binaries.
 | --- | --- |
 | `--bind` | Bind address. Default `127.0.0.1`. |
 | `--port` | Port. Default `9173`. |
-| `--ssl` | Enable TLS for server transport. |
+| `--ssl` | Enable TLS for server transport. TLS is disabled by default. |
 | `--tls-cert` | PEM certificate chain, required when TLS is enabled. |
 | `--tls-key` | PEM private key, required when TLS is enabled. |
-| `--user` | Required username. |
-| `--password` | Required password. |
+| `--tls-client-ca` | PEM CA bundle used to require and verify client certificates for mTLS. |
+| `--user` | Username. Default `vaylix`. |
+| `--password` | Password. Default `vaylix`. |
+| `--disable-auth` | Disable auth for trusted local testing only. |
 
 ### Persistence and Runtime
 
@@ -40,8 +42,7 @@ description: Command-line flags for the Vaylix server and client binaries.
 | `--max-transaction-queue-len` | Max queued commands inside `MULTI`. |
 | `--requests-per-second` | Sustained per-connection rate. |
 | `--request-burst` | Burst budget for rate limiting. |
-| `--compression` | `none` or `zstd` for outbound frames. |
-| `--compression-threshold-bytes` | Minimum payload size before compression is attempted. |
+| `--disable-compression` | Disable default outbound zstd frame compression. |
 
 ## Client Flags
 
@@ -50,16 +51,30 @@ description: Command-line flags for the Vaylix server and client binaries.
 | `--url` | Full connection string, e.g. `vaylix://user:password@127.0.0.1:9173`. |
 | `--host` | Host when `--url` is not used. |
 | `--port` | Port when `--url` is not used. |
-| `--ssl` | Enable TLS. |
+| `--ssl` | Enable TLS. Plain TCP is used by default. |
 | `--tls-ca-cert` | Custom CA bundle for server verification. |
+| `--tls-client-cert` | Client certificate chain used for mTLS. Requires TLS and `--tls-client-key`. |
+| `--tls-client-key` | Client private key used for mTLS. Requires TLS and `--tls-client-cert`. |
 | `--user` | Username override. |
 | `--password` | Password override. |
+| `--disable-auth` | Skip auth handshake for trusted local testing only. |
 | `--output` | `plain`, `table`, or `json`. |
-| `--compression` | `none` or `zstd` for outbound frames. |
-| `--compression-threshold-bytes` | Minimum payload size before compression is attempted. |
+| `--disable-compression` | Disable default outbound zstd frame compression. |
 
 ## Connection String Example
 
 ```text
 vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true&output=json&compression=zstd
 ```
+
+Supported URL query parameters include:
+
+- `ssl=true`
+- `output=plain|table|json`
+- `ca_cert=/path/to/ca.pem`
+- `client_cert=/path/to/client.crt`
+- `client_key=/path/to/client.key`
+- `auth=false`
+- `compression=none|zstd`
+
+CLI flags take precedence over values parsed from the URL.

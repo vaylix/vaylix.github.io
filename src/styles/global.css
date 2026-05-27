@@ -37,6 +37,36 @@
 }
 
 @layer base {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  main,
+  article,
+  .content-panel,
+  .sl-container,
+  .sl-markdown-content,
+  .not-prose {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
   .sl-markdown-content a,
   .not-prose a:not([class*='rounded-']) {
     text-decoration-line: none;
@@ -45,6 +75,22 @@
   .sl-markdown-content a:hover,
   .not-prose a:not([class*='rounded-']):hover {
     text-decoration-line: none;
+  }
+
+  .sl-markdown-content :is(pre, table),
+  .expressive-code,
+  .expressive-code figure,
+  .expressive-code pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .sl-markdown-content table {
+    display: block;
+  }
+
+  .sl-markdown-content :not(pre) > code {
+    overflow-wrap: anywhere;
   }
 }
 

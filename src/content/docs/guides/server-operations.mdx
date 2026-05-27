@@ -1,6 +1,6 @@
 ---
 title: Server Operations
-description: Configure runtime limits, audit logging, transport compression, and operational controls.
+description: Configure runtime limits, audit logging, TLS, persistence, and operational controls.
 ---
 
 ## Important Server Flags
@@ -10,15 +10,48 @@ description: Configure runtime limits, audit logging, transport compression, and
 | `--bind` | Listener address |
 | `--port` | Listener port |
 | `--data-dir` | Persistent storage root |
-| `--user` / `--password` | Mandatory auth credentials |
+| `--user` / `--password` | Auth credentials; defaults are local-development values |
+| `--disable-auth` | Disable authentication for trusted local testing only |
 | `--ssl` | Enable TLS |
 | `--tls-cert` / `--tls-key` | TLS certificate and private key |
+| `--tls-client-ca` | Require client certificates signed by this CA bundle |
 | `--wal-sync` | WAL durability policy |
 | `--snapshot-interval-seconds` | Periodic background snapshotting |
 | `--expiration-sweep-interval-seconds` | Background TTL sweeper |
 | `--idle-timeout-seconds` | Disconnect idle clients |
-| `--compression` | Outbound frame compression mode |
+| `--disable-compression` | Disable default outbound zstd frame compression |
 | `--audit-log-path` | Override audit log location |
+
+## Default Runtime Behavior
+
+Unless configured otherwise, the server starts with:
+
+- plaintext TCP transport
+- auth enabled
+- outbound zstd frame compression enabled
+- server-managed encrypted persistence under `--data-dir`
+- append-only JSONL audit logging
+
+Enable TLS explicitly for production-facing deployments:
+
+```sh
+cargo run -p server -- \
+  --ssl \
+  --tls-cert ./certs/server.crt \
+  --tls-key ./certs/server.key
+```
+
+Require mTLS by adding a client CA bundle:
+
+```sh
+cargo run -p server -- \
+  --ssl \
+  --tls-cert ./certs/server.crt \
+  --tls-key ./certs/server.key \
+  --tls-client-ca ./certs/client-ca.crt
+```
+
+When `--tls-client-ca` is set, clients must present a certificate chaining to that CA. Application auth still runs after the TLS handshake unless `--disable-auth` is explicitly used for trusted testing.
 
 ## Abuse Controls
 

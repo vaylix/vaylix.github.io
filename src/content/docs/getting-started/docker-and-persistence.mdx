@@ -19,8 +19,10 @@ docker run \
   -v vaylix-data:/var/lib/vaylix \
   -e VAYLIX_USER=vaylix \
   -e VAYLIX_PASSWORD=vaylix \
-  ghcr.io/<owner>/vaylix:latest
+  ghcr.io/vaylix/vaylix:latest
 ```
+
+Auth and outbound compression are enabled by default. TLS still needs explicit certificate configuration if the container is exposed outside a trusted local network. mTLS additionally requires mounting the client CA bundle and passing `--tls-client-ca`.
 
 ## What Lives in the Data Directory
 
@@ -43,3 +45,5 @@ Without a mounted volume, you lose:
 - audit logs
 
 That means a fresh ephemeral container would not be able to recover old encrypted data even if you copied only part of the directory. The data directory is the persistence boundary, not just the snapshot file.
+
+Do not mount only `snapshot.bin` or only `wal.log`. The keyring and manifest are required to verify and decrypt persisted data.
