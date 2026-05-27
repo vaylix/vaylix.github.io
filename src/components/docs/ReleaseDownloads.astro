@@ -1,0 +1,171 @@
+---
+import { FaApple, FaLinux, FaWindows } from 'react-icons/fa6';
+import { LuArrowUpRight, LuDownload, LuPackage } from 'react-icons/lu';
+
+type ReleaseAsset = {
+  label: string;
+  target: string;
+  arch: string;
+  format: string;
+  href: string;
+  icon: 'linux' | 'macos' | 'windows';
+};
+
+type ReleaseEntry = {
+  version: string;
+  date: string;
+  notesHref: string;
+  assets: ReleaseAsset[];
+};
+
+const osIcons = {
+  linux: FaLinux,
+  macos: FaApple,
+  windows: FaWindows,
+} as const;
+
+const releases: ReleaseEntry[] = [
+  {
+    version: 'v0.1.0',
+    date: '2026-05-27',
+    notesHref: 'https://github.com/vaylix/vaylix/releases/tag/v0.1.0',
+    assets: [
+      {
+        label: 'Linux',
+        target: 'Server',
+        arch: 'x86_64',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-server-v0.1.0-linux-x86_64.tar.gz',
+        icon: 'linux',
+      },
+      {
+        label: 'Linux',
+        target: 'Server',
+        arch: 'aarch64',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-server-v0.1.0-linux-aarch64.tar.gz',
+        icon: 'linux',
+      },
+      {
+        label: 'macOS',
+        target: 'Server',
+        arch: 'Apple Silicon',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-server-v0.1.0-macos-aarch64.tar.gz',
+        icon: 'macos',
+      },
+      {
+        label: 'Windows',
+        target: 'Server',
+        arch: 'x86_64',
+        format: '.zip',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-server-v0.1.0-windows-x86_64.zip',
+        icon: 'windows',
+      },
+      {
+        label: 'Linux',
+        target: 'Client',
+        arch: 'x86_64',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-client-v0.1.0-linux-x86_64.tar.gz',
+        icon: 'linux',
+      },
+      {
+        label: 'Linux',
+        target: 'Client',
+        arch: 'aarch64',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-client-v0.1.0-linux-aarch64.tar.gz',
+        icon: 'linux',
+      },
+      {
+        label: 'macOS',
+        target: 'Client',
+        arch: 'Apple Silicon',
+        format: '.tar.gz',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-client-v0.1.0-macos-aarch64.tar.gz',
+        icon: 'macos',
+      },
+      {
+        label: 'Windows',
+        target: 'Client',
+        arch: 'x86_64',
+        format: '.zip',
+        href: 'https://github.com/vaylix/vaylix/releases/download/v0.1.0/vaylix-client-v0.1.0-windows-x86_64.zip',
+        icon: 'windows',
+      },
+    ],
+  },
+];
+---
+
+<div class="not-prose space-y-5">
+  {releases.map((release) => (
+    <section class="rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">
+            <LuPackage className="size-3.5" aria-hidden="true" />
+            Release {release.version}
+          </div>
+          <p class="text-sm leading-6 text-zinc-400">
+            Download prebuilt `server` and `client` binaries for the current tagged release instead
+            of compiling the Rust workspace yourself.
+          </p>
+        </div>
+
+        <a
+          href={release.notesHref}
+          target="_blank"
+          rel="noreferrer"
+          class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          aria-label={`Open GitHub release notes for ${release.version}`}
+        >
+          View release notes
+          <LuArrowUpRight className="size-4" aria-hidden="true" />
+        </a>
+      </div>
+
+      <div class="mt-5">
+        <div class="flex flex-wrap gap-3">
+          {release.assets.map((asset) => {
+            const Icon = osIcons[asset.icon];
+
+            return (
+              <a
+                href={asset.href}
+                class="group flex min-w-0 flex-1 basis-[19rem] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3.5 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                aria-label={`Download ${release.version} ${asset.target} for ${asset.label} ${asset.arch}`}
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
+                    <Icon className="size-4" aria-hidden="true" />
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span class="text-sm font-semibold text-zinc-100">{asset.label}</span>
+                      <span class="text-xs uppercase tracking-[0.16em] text-zinc-500">{asset.target}</span>
+                    </div>
+                    <p class="truncate text-sm text-zinc-400">
+                      {asset.arch} <span aria-hidden="true">·</span> {asset.format}
+                    </p>
+                  </div>
+                </div>
+
+                <span class="inline-flex items-center gap-2 text-sm font-medium text-emerald-300">
+                  Download
+                  <LuDownload className="size-4 transition group-hover:translate-y-px" aria-hidden="true" />
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <p class="mt-4 text-xs leading-5 text-zinc-500">
+        Published {release.date}. Release archives include the binary, license, README, and a
+        `VERSION` file.
+      </p>
+    </section>
+  ))}
+</div>

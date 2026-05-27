@@ -1,13 +1,62 @@
 ---
 title: Install and Build
-description: Build the Vaylix workspace and validate the server, client, and shared crates locally.
+description: Download a tagged Vaylix release or build the workspace locally when you need source-based installation.
 ---
 
-## Requirements
+import ReleaseDownloads from '../../../components/docs/ReleaseDownloads.astro';
+
+## Download a Release
+
+<ReleaseDownloads />
+
+Use the tagged release archives if you want the fastest path to a working `server` or `client`
+binary. They are grouped by platform and packaged directly from the GitHub release workflow.
+
+## Use the Published Docker Image
+
+If you only need the server, use the prebuilt container image instead of compiling the Rust
+workspace.
+
+Pull the latest published image:
+
+```sh
+docker pull ghcr.io/vaylix/vaylix:latest
+```
+
+Run it with a persistent data volume:
+
+```sh
+docker run \
+  -p 9173:9173 \
+  -v vaylix-data:/var/lib/vaylix \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=vaylix \
+  ghcr.io/vaylix/vaylix:latest
+```
+
+The image defaults to:
+
+- `VAYLIX_BIND=0.0.0.0`
+- `VAYLIX_PORT=9173`
+- `VAYLIX_MAX_CONNECTIONS=256`
+- `VAYLIX_WAL_SYNC=flush`
+- `VAYLIX_DATA_DIR=/var/lib/vaylix`
+- `VAYLIX_USER=vaylix`
+- `VAYLIX_PASSWORD=vaylix`
+
+For the full container/runtime variable list, see
+[Docker and Persistence](/getting-started/docker-and-persistence/).
+
+## Build from Source
+
+Build from source when you want to inspect the workspace, run validation locally, or modify the
+database.
+
+### Requirements
 
 - Rust toolchain for the main database workspace
 
-## Build the Workspace
+### Build the Workspace
 
 From the Vaylix project root:
 
@@ -22,7 +71,7 @@ cargo build --release -p server
 cargo build --release -p client
 ```
 
-## Validate the Workspace
+### Validate the Workspace
 
 ```sh
 cargo fmt --check
@@ -31,7 +80,7 @@ cargo test --workspace
 cargo audit
 ```
 
-## What This Produces
+### What This Produces
 
 The main workspace gives you:
 
