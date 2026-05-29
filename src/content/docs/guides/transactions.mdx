@@ -1,6 +1,6 @@
 ---
 title: Transactions
-description: Understand how MULTI, EXEC, and DISCARD behave in the current single-node engine.
+description: Current MULTI/EXEC/DISCARD behavior, guarantees, and limits in the single-node engine.
 ---
 
 ## What Exists Today
@@ -19,32 +19,32 @@ Inside one session:
 
 1. `MULTI` starts queueing commands.
 2. `EXEC` evaluates the queued commands against one working state.
-3. If every queued command succeeds, one WAL entry is appended and the whole batch commits.
-4. If any queued command fails, the transaction does not commit.
+3. If every queued command succeeds, one WAL-backed atomic batch commits.
+4. If any queued command fails, the batch does not commit.
 
-This gives you atomic single-node commit behavior for queued data commands.
+This gives atomic single-node commit behavior for queued data commands.
 
-## What It Is Not
+## Current Limits
 
-The current transaction system is not:
-
-- MVCC
-- distributed
-- replication-aware
-- exposed as a formal isolation-level model
-
-The docs and code should both remain explicit about that.
+- transactions are serialized through the engine worker
+- transactions are not MVCC
+- transactions are not distributed
+- sequence-tagged or pipelined requests are rejected while a transaction is active
+- transactions expire after the configured `--transaction-max-seconds` window
+- maintenance mode rejects transaction entry and commit
 
 ## Commands That Do Not Belong in Transactions
 
-The current implementation keeps operational and local-only commands out of `EXEC` batches, including:
+The implementation keeps operational and local-only commands out of `EXEC` batches, including:
 
 - `AUTH`
 - `INFO`
 - `METRICS`
+- `METRICS PROM`
 - `SAVE`
 - `SNAPSHOT`
-- `HELP`
-- `EXIT`
+- logical backup and restore flows
+- maintenance-mode commands
+- local `HELP`, `EXIT`, and `QUIT`
 
-Those are rejected rather than being treated as half-supported behavior.
+Those are rejected rather than being treated as partially supported behavior.

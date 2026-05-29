@@ -1,9 +1,7 @@
 ---
 title: System Design
-description: Architecture, crate boundaries, and the main flow of requests through Vaylix.
+description: Architecture, runtime boundaries, and the execution flow through Vaylix.
 ---
-
-import { FileTree } from '@astrojs/starlight/components';
 
 ## Core Stack
 
@@ -11,195 +9,45 @@ import { FileTree } from '@astrojs/starlight/components';
 
 That line is the main architectural rule.
 
-## Repository Layout
-
-The workspace is split by responsibility. The tree below shows the main crates and the files that anchor each subsystem.
-
-<FileTree>
-
-- **Cargo.toml** workspace manifest and shared dependency graph
-
-- README.md project-level usage and development guidance
-
-- LLM.md canonical non-sensitive engineering context in the main repository
-
-- `.github`
-
-  - workflows/
-
-- crates
-
-  - **command** local command language and parsing
-
-    - Cargo.toml
-
-    - src
-
-      - **lib.rs**
-
-      - command.rs command definitions and variants
-
-      - lexer.rs tokenization for the REPL command language
-
-      - parser.rs option-aware command parsing
-
-      - error.rs command parse and validation errors
-
-  - **transport** shared wire protocol and framed I/O
-
-    - Cargo.toml
-
-    - src
-
-      - **lib.rs**
-
-      - frame.rs binary frame layout
-
-      - codec.rs request and response encoding and decoding
-
-      - opcode.rs protocol operation identifiers
-
-      - request.rs wire request structures
-
-      - response.rs wire response structures
-
-      - options.rs transport runtime options such as compression settings
-
-      - error.rs transport-specific error surface
-
-      - constants.rs protocol constants and limits
-
-  - **engine** state, durability, and recovery
-
-    - Cargo.toml
-
-    - src
-
-      - **lib.rs**
-
-      - config.rs engine-level runtime and durability options
-
-      - paths.rs on-disk path layout helpers
-
-      - error.rs engine error types
-
-      - engine
-
-        - … core state and execution internals
-
-      - store
-
-        - binary.rs MessagePack persistence serialization helpers
-
-        - … WAL, snapshots, manifest, crypto, keyring, and persistence helpers
-
-  - **server** network runtime and request orchestration
-
-    - Cargo.toml
-
-    - src
-
-      - **main.rs** server entrypoint
-
-      - lib.rs
-
-      - server.rs Tokio listener, sessions, and request flow
-
-      - auth.rs default-on authentication logic
-
-      - tls.rs TLS/mTLS acceptor and certificate wiring
-
-      - metrics.rs runtime metrics collection
-
-      - audit.rs append-only audit logging
-
-      - args.rs CLI argument parsing
-
-      - error.rs server error types
-
-    - tests
-
-      - tcp_integration.rs network-level integration coverage
-
-  - **client** REPL and operator-facing UX
-
-    - Cargo.toml
-
-    - src
-
-      - **main.rs** client entrypoint
-
-      - client.rs interactive request loop and rendering
-
-      - args.rs URL and flag parsing
-
-      - helper.rs REPL help text and command support
-
-      - paths.rs local client path helpers
-
-      - error.rs client-side error types
-
-</FileTree>
-
-## Crate Responsibilities
-
-### `command`
-
-- command definitions
-- lexer
-- parser
-- command metadata
-
-### `transport`
-
-- frame format
-- request and response encoding
-- opcodes
-- checksums
-- compression flags
-- sync and async I/O helpers
-
-### `engine`
-
-- key/value state
-- expirations
-- WAL
-- snapshots
-- manifest
-- recovery
-- storage encryption
-
-### `server`
-
-- Tokio networking
-- TLS/mTLS accept
-- authentication
-- per-session lifecycle
-- runtime guardrails
-- audit logging
-- engine runtime worker
+## Layer Responsibilities
 
 ### `client`
 
-- REPL
-- connection strings
-- TLS/mTLS client setup
-- output rendering
+- parses user input through the shared `command` crate
+- opens TCP or TLS connections
+- performs startup negotiation and optional `AUTH`
+- renders responses in `plain`, `table`, or `json`
 
-## How the Pieces Connect
+### `transport`
 
-The repository structure mirrors the runtime layering directly:
+- owns VTP2 framing
+- encodes and decodes request and response payloads
+- handles startup negotiation
+- applies compression and checksum rules
+- provides sync and async I/O helpers
 
-- `client` turns user input into `command` values and sends them through `transport`
-- `transport` owns framing, opcodes, checksums, and message encoding for both sides
-- `server` accepts TCP, TLS, or mTLS connections, authenticates sessions by default, enforces guardrails, and routes decoded requests
-- `engine` applies state changes, maintains durability, and recovers from persisted storage
+### `server`
 
-That separation is the reason transport changes do not require socket parsing inside the engine, and engine changes do not require protocol logic inside storage code.
+- accepts TCP/TLS/mTLS sessions
+- enforces authentication and RBAC
+- enforces request limits, rate limits, and idle timeouts
+- manages maintenance mode
+- records audit events
+- routes validated commands into the engine worker
+
+### `engine`
+
+- owns the in-memory key/value state
+- applies expirations
+- persists snapshots and segmented WAL
+- recovers from persisted storage
+- performs logical backup/restore and offline PITR-oriented restore
 
 ## Why the Engine Worker Exists
 
-The current server accepts multiple client connections concurrently, but mutating engine work is still serialized through a dedicated engine worker. That gives:
+The server accepts multiple client connections concurrently, but mutating engine work is still serialized through a dedicated engine worker.
+
+That gives:
 
 - deterministic single-node ordering
 - a clean place for atomic transaction application
@@ -207,14 +55,52 @@ The current server accepts multiple client connections concurrently, but mutatin
 
 It is a deliberate single-node design, not a distributed concurrency model.
 
-## Runtime Defaults
+## Persistence Model
 
-Current binaries default to:
+Current persisted state is built from:
 
-- plaintext TCP unless `--ssl` is enabled
-- mTLS is required only when the server is configured with `--tls-client-ca`
-- auth enabled unless `--disable-auth` is used for trusted local testing
-- outbound zstd frame compression enabled unless `--disable-compression` is used
-- encrypted persistence through a server-managed keyring
+- encrypted snapshots
+- segmented encrypted WAL
+- manifests
+- a server-managed storage keyring
 
-Replication, sharding, distributed transactions, and cluster membership are roadmap constraints, not implemented runtime features.
+Snapshot flow:
+
+1. purge expired keys
+2. seal the active WAL segment
+3. write the encrypted snapshot
+4. write the manifest
+5. create a new active segment
+6. prune sealed segments older than retention
+
+Recovery flow:
+
+1. load keyring
+2. verify and load manifest
+3. decrypt and load snapshot
+4. replay retained WAL segments in order
+
+## Operational Controls
+
+The server runtime currently includes:
+
+- default-on auth
+- RBAC enforced before engine execution
+- optional TLS and mTLS
+- rate limiting
+- transaction queue and lifetime limits
+- maintenance mode
+- logical backup/restore
+- offline storage verification, migration, and PITR-oriented restore
+
+## Current Boundaries
+
+What Vaylix does not implement today:
+
+- replication
+- sharding
+- MVCC
+- distributed transactions
+- formal distributed ACID
+
+Those are roadmap boundaries, not current runtime features.

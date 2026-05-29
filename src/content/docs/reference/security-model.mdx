@@ -1,6 +1,6 @@
 ---
 title: Security Model
-description: Authentication, TLS, at-rest encryption, audit logging, and the current security boundary.
+description: Authentication, RBAC, TLS, at-rest encryption, audit logging, and current security boundaries.
 ---
 
 ## Authentication
@@ -12,22 +12,63 @@ Development defaults:
 - username: `vaylix`
 - password: `vaylix`
 
-These are convenience defaults, not production credentials.
+Those defaults are for local development only. Production deployments should override them.
 
-`--disable-auth` exists for trusted local tests. When auth is disabled on the server, commands execute without an `AUTH` handshake. Do not use that mode for exposed deployments.
+`--disable-auth` exists for trusted local tests. When auth is disabled on the server, commands execute without an `AUTH` handshake and RBAC checks are bypassed.
 
-## TLS
+## Password Policy and Auth Lockouts
+
+Current password policy for `create user` and `alter user ... password ...`:
+
+- minimum length `12`
+- at least one ASCII letter
+- at least one ASCII digit
+
+Current auth throttling controls:
+
+- `--auth-failure-window-seconds`
+- `--auth-failure-limit`
+- `--auth-lockout-seconds`
+
+Lockouts are tracked per `(username, peer)` tuple. Successful authentication clears the failure window for that tuple.
+
+## RBAC
+
+RBAC is implemented in the server layer, not the engine.
+
+Current permissions:
+
+- `read`
+- `write`
+- `admin`
+- `backup`
+- `restore`
+- `metrics`
+- `snapshot`
+- `clear`
+- `user_admin`
+- `role_admin`
+
+Permission grants are pattern-scoped over keys. For example:
+
+```text
+grant permission read on app:* to readonly
+```
+
+The `admin` permission bypasses pattern checks.
+
+## TLS and mTLS
 
 TLS is supported and disabled by default.
 
-Server requirements:
+Server-side inputs:
 
 - `--ssl`
 - `--tls-cert`
 - `--tls-key`
-- `--tls-client-ca` to require client certificates for mTLS
+- `--tls-client-ca`
 
-Client options:
+Client-side inputs:
 
 - `--ssl`
 - `--tls-ca-cert`
@@ -35,45 +76,64 @@ Client options:
 - `--tls-client-key`
 - `?ssl=true` in URL form
 
-mTLS is additive to application authentication. When the server is started with `--tls-client-ca`, the TLS handshake requires a client certificate chaining to that CA. The username/password `AUTH` flow still applies unless auth was explicitly disabled for trusted testing.
+mTLS is additive to application authentication. When the server is started with `--tls-client-ca`, the TLS handshake requires a client certificate chaining to that CA. Username/password auth still runs after the TLS handshake unless auth was explicitly disabled for trusted testing.
+
+Operational behavior:
+
+- TLS startup fails if the certificate is already expired or the certificate/key pair cannot be loaded together
+- certificate expiry metadata is exposed through `INFO`
+- on Unix, `SIGHUP` reloads the configured TLS certificate, key, and client CA
 
 ## At-Rest Encryption
 
-Snapshots, WAL entries, manifest metadata, and the keyring format are encrypted or integrity-protected at rest using a server-managed keyring.
+Snapshots, WAL segments, manifests, and keyring files are encrypted or integrity-protected at rest using a server-managed keyring.
 
 Important property:
 
-- storage encryption is separate from the auth password
+- storage encryption is separate from auth credentials
 
-That keeps authentication concerns and persistence-key management from collapsing into one weak configuration surface.
+That keeps persistence-key management separate from authentication configuration.
 
-Storage format version `2` uses MessagePack-based engine serialization inside the encrypted persistence files. Older pre-v2 storage is not auto-migrated; recovery should fail closed instead of silently reading incompatible files.
+Current persisted storage format:
 
-## Transport Compression
-
-Outbound zstd frame compression is enabled by default for the server and client binaries. Compression is not a substitute for TLS. It changes frame encoding only; confidentiality still requires TLS.
+- storage format version `3`
+- MessagePack-based engine serialization inside encrypted persistence files
 
 ## Audit Logging
 
-Audit logging records command-level accountability without storing secrets:
+Audit logging records command-level accountability without storing secrets.
 
-- no passwords
-- no raw request payload contents
-- no value dumps
+Stored fields include:
 
-What is stored instead:
-
-- who authenticated
-- what opcode ran
+- audit sequence
+- previous hash
+- current hash
+- timestamp
+- connection ID
+- peer
+- authenticated username
 - request ID
-- outcome
-- timing
+- opcode
+- response status
+- error code when present
+- latency
+- semantic event type
+- sanitized details map
 
-## Current Boundary
+Passwords and raw value payloads are not recorded.
 
-What is still intentionally missing:
+The audit log is hash-chained with SHA-256 and verified on startup. This makes local tampering detectable, but it is not non-repudiation without an external anchor.
 
-- multi-user ACLs
+## Compression
+
+Default-on zstd frame compression improves transport efficiency. It does not provide confidentiality and should not be treated as a substitute for TLS.
+
+## Current Security Boundary
+
+What Vaylix currently does not provide:
+
 - mandatory TLS
-- signed audit pipelines
+- TLS certificate automation or rotation workflow
+- external auth integration
 - distributed trust boundaries for replicas or shards
+- externally anchored or signed audit pipelines

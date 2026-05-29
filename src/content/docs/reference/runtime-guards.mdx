@@ -1,6 +1,6 @@
 ---
 title: Limits and Runtime Guards
-description: Current quotas, rate limiting, timeout controls, and their operational purpose.
+description: Current quotas, rate limiting, timeout controls, and maintenance restrictions in the Vaylix server.
 ---
 
 ## Current Guardrails
@@ -15,6 +15,27 @@ The server exposes guardrails for:
 - sustained request rate
 - burst request rate
 - idle connection lifetime
+- transaction lifetime
+- auth failure window and temporary lockout
+
+## Runtime Controls
+
+Important controls include:
+
+- `--max-request-payload-bytes`
+- `--max-key-bytes`
+- `--max-value-bytes`
+- `--max-keys-per-batch`
+- `--max-transaction-queue-len`
+- `--requests-per-second`
+- `--request-burst`
+- `--idle-timeout-seconds`
+- `--transaction-max-seconds`
+- `--auth-failure-window-seconds`
+- `--auth-failure-limit`
+- `--auth-lockout-seconds`
+
+These are also available through the documented `VAYLIX_*` environment variables for container use.
 
 ## Why They Exist
 
@@ -22,18 +43,29 @@ These controls reduce:
 
 - accidental oversized requests
 - noisy-client impact
-- unbounded queued transaction memory growth
+- unbounded queued transaction growth
 - idle connection leakage
+- unbounded open transaction lifetime
+- repeated online auth guessing without delay
 
-## What They Are Not
+## Maintenance Mode
 
-They are not a full platform-wide abuse defense strategy.
+Maintenance mode is a separate operational restriction:
 
-Missing areas still include:
+- `maintenance on`
+- `maintenance off`
+- `maintenance status`
+
+When enabled, the server stays available for reads, inspection, and backup verification flows, but rejects mutating commands, restore flows, and transaction entry/commit.
+
+## What These Controls Are Not
+
+They are not a complete abuse-defense platform.
+
+Still missing:
 
 - global rate limits
 - per-user quotas
 - IP reputation or ban lists
-- cluster-wide admission control
-
-For the current single-node server, they are still worth using because they define predictable per-session behavior.
+- distributed admission control
+- replication-aware backpressure

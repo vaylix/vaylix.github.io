@@ -1,0 +1,26 @@
+---
+import SectionHeader from './SectionHeader.astro';
+
+interface Props {
+  title: string;
+  icon: any;
+  items: string[];
+  tone?: 'emerald' | 'zinc';
+  id?: string;
+}
+
+const { title, icon, items, tone = 'emerald', id } = Astro.props;
+const bulletClass = tone === 'emerald' ? 'bg-emerald-300' : 'bg-zinc-500';
+---
+
+<div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-1">
+  <SectionHeader id={id} title={title} icon={icon} />
+  <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+    {items.map((item) => (
+      <li class="flex gap-3">
+        <span class:list={['mt-2 size-1.5 shrink-0 rounded-full', bulletClass]} aria-hidden="true"></span>
+        <span>{item}</span>
+      </li>
+    ))}
+  </ul>
+</div>

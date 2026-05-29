@@ -51,7 +51,7 @@ export default defineConfig({
           items: [
             { label: 'Install and Build', slug: 'getting-started/install-and-build' },
             { label: 'Run Server and Client', slug: 'getting-started/run-local' },
-            { label: 'Docker and Persistence', slug: 'getting-started/docker-and-persistence' }
+            { label: 'Build from Source', slug: 'getting-started/source-build' }
           ]
         },
         {

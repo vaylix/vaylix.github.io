@@ -1,0 +1,62 @@
+---
+import { LuArrowUpRight } from 'react-icons/lu';
+import type { ReleaseEntry } from '../data/releases';
+import ReleaseAssetLink from './ReleaseAssetLink.astro';
+
+interface Props {
+  release: ReleaseEntry;
+  open?: boolean;
+  latest?: boolean;
+}
+
+const { release, open = false, latest = false } = Astro.props;
+---
+
+<details
+  name="release-downloads"
+  class="group overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/75 ring-1 ring-white/5"
+  open={open}
+>
+  <summary class="flex cursor-pointer items-center gap-3 px-5 py-4 sm:px-6">
+    <div class="flex min-w-0 items-center gap-2.5">
+      <span class="text-sm font-semibold text-white sm:text-base">{release.version}</span>
+      {latest && (
+        <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-emerald-300">
+          Latest
+        </span>
+      )}
+    </div>
+  </summary>
+
+  <div class="border-t border-white/10 px-5 py-5 sm:px-6">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div class="space-y-1">
+        <p class="text-sm font-medium text-zinc-100">Release {release.version}</p>
+        <p class="text-sm leading-6 text-zinc-400">
+          Prebuilt `server` and `client` binaries for the tagged release, grouped by platform.
+        </p>
+        <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">{release.date}</p>
+      </div>
+
+      <a
+        href={release.notesHref}
+        target="_blank"
+        rel="noreferrer"
+        class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        aria-label={`Open GitHub release notes for ${release.version}`}
+      >
+        Release notes
+        <LuArrowUpRight className="size-4" aria-hidden="true" />
+      </a>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      {release.assets.map((asset) => <ReleaseAssetLink asset={asset} version={release.version} />)}
+    </div>
+
+    <p class="mt-4 text-xs leading-5 text-zinc-500">
+      Release archives include the binary, license, README, and a `VERSION` file. The server
+      image for this release is also published to `ghcr.io/vaylix/vaylix`.
+    </p>
+  </div>
+</details>

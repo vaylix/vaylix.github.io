@@ -1,49 +1,53 @@
 ---
 title: Persistence and Recovery
-description: Snapshots, WAL replay, manifest metadata, storage encryption, and recovery behavior.
+description: Segmented WAL, snapshots, manifests, storage encryption, logical backup flows, and offline PITR-oriented restore behavior.
 ---
 
 ## Persistence Model
 
-Vaylix uses:
+Vaylix currently uses:
 
 - encrypted snapshots
-- a write-ahead log
-- a manifest to describe the durable snapshot baseline
-- storage format version `2`
+- segmented encrypted WAL
+- a manifest describing the durable snapshot baseline
+- storage format version `3`
 - MessagePack-based engine serialization inside encrypted persistence files
 
 ## Snapshot Flow
 
-1. Purge expired keys.
-2. Optionally rotate the active storage key.
-3. Serialize the in-memory state.
-4. Encrypt the snapshot payload.
-5. Write a temp snapshot file.
-6. `fsync` the temp file.
-7. Atomically rename it into place.
-8. Write the manifest.
-9. `fsync` the manifest.
-10. Truncate the WAL.
+1. purge expired keys
+2. optionally rotate the active storage key
+3. seal the active WAL segment
+4. serialize the in-memory state
+5. encrypt the snapshot payload
+6. write a temp snapshot file
+7. `fsync` the temp file
+8. atomically rename it into place
+9. write the manifest
+10. `fsync` the manifest
+11. create a new active WAL segment
+12. prune sealed segments older than retention
 
 ## Recovery Flow
 
-1. Load or create the keyring.
-2. Load the manifest.
-3. Verify and decrypt the snapshot.
-4. Deserialize the snapshot state.
-5. Replay and verify WAL entries on top of it.
-
-## Storage Keyring
-
-At-rest encryption is server-managed.
-
-- there is no user-facing `--data-key` flag
-- new data is encrypted with the active storage key
-- older data can still be decrypted with retained previous keys
-- recovery fails closed on key mismatch, authentication failure, checksum mismatch, or unsupported storage format
+1. load or create the keyring
+2. load the manifest
+3. verify and decrypt the snapshot
+4. deserialize the snapshot state
+5. replay and verify retained WAL segments on top of it
 
 ## WAL Behavior
+
+WAL lives under:
+
+```text
+<data-dir>/wal/
+```
+
+Current segment naming:
+
+- active segment: `active-<start_sequence>.wal`
+- sealed segment: `<start_sequence>-<end_sequence>.wal`
 
 Each WAL entry is:
 
@@ -52,6 +56,52 @@ Each WAL entry is:
 - checksummed
 - appended using the configured sync policy
 
-The current engine treats a WAL entry as the atomic durability unit for committed changes.
+The current engine treats one WAL entry as the atomic durability unit for committed changes.
 
-Older pre-version-2 storage files are not migrated automatically. Operators should treat the full data directory as one unit because snapshots, WAL, manifest, and keyring files are interdependent.
+## Storage Keyring
+
+At-rest encryption is server-managed.
+
+- there is no user-facing data-key flag
+- new persisted data is encrypted with the active storage key
+- older data can still be decrypted with retained previous keys
+- recovery fails closed on key mismatch, authentication failure, checksum mismatch, or unsupported storage format
+
+## Logical Backup and Restore
+
+Logical backup commands are separate from physical snapshotting.
+
+Current commands:
+
+- `backup`
+- `backup to <path>`
+- `backup verify <logical-dump-json>`
+- `backup verify from <path>`
+- `restore <logical-dump-json>`
+- `restore from <path>`
+- `restore check <logical-dump-json>`
+- `restore check from <path>`
+
+File-backed backups use a sidecar:
+
+```text
+<backup>.manifest.json
+```
+
+That manifest records the backup version, creation time, source sequence, entry count, byte length, SHA-256 digest, and hash algorithm.
+
+## Offline Storage and PITR Operations
+
+The server binary provides offline commands for storage verification, migration, and PITR-oriented restore:
+
+```sh
+vaylix storage verify --data-dir /var/lib/vaylix
+vaylix storage migrate --data-dir /var/lib/vaylix
+vaylix pitr inspect --data-dir /var/lib/vaylix
+vaylix pitr restore \
+  --source-dir /var/lib/vaylix \
+  --target-dir /tmp/vaylix-restore \
+  --to-sequence 1234
+```
+
+Current PITR scope is offline-first only. Restore writes a new target directory and does not mutate the source data directory in place.

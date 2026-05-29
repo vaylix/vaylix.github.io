@@ -1,0 +1,41 @@
+---
+import { LuCircleCheckBig } from 'react-icons/lu';
+import SectionHeader from './SectionHeader.astro';
+
+const items = [
+  {
+    href: '/getting-started/install-and-build/',
+    title: 'Install and build',
+    description: 'Choose release binaries, Docker, or a local source build.',
+  },
+  {
+    href: '/getting-started/run-local/',
+    title: 'Run a local node',
+    description: 'Bring up the server and client with the default development credentials.',
+  },
+  {
+    href: '/reference/commands/',
+    title: 'Command reference',
+    description: 'Review the current command grammar with short examples and operational notes.',
+  },
+  {
+    href: '/reference/project-context/',
+    title: 'Project context',
+    description: 'Use the maintained engineering summary for protocol, persistence, and runtime boundaries.',
+  },
+] as const;
+---
+
+<div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-[0.92]">
+  <SectionHeader title="Start here" icon={LuCircleCheckBig} />
+  <ol class="space-y-3 text-sm leading-6 text-zinc-300">
+    {items.map((item) => (
+      <li>
+        <a class="font-medium text-zinc-100 hover:text-emerald-300" href={item.href}>
+          {item.title}
+        </a>
+        <span class="block text-zinc-500">{item.description}</span>
+      </li>
+    ))}
+  </ol>
+</div>

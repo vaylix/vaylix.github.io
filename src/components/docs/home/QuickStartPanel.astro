@@ -1,0 +1,18 @@
+---
+import { Code } from '@astrojs/starlight/components';
+import { LuSquareTerminal } from 'react-icons/lu';
+import SectionHeader from './SectionHeader.astro';
+
+interface Props {
+  code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-[1.08]">
+  <SectionHeader id="quickstart-heading" title="Quick start" icon={LuSquareTerminal} />
+  <div class="max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/50">
+    <Code code={code} lang="bash" />
+  </div>
+</div>

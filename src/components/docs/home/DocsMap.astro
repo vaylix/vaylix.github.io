@@ -1,0 +1,40 @@
+---
+import { LuArrowRight, LuBookOpen } from 'react-icons/lu';
+import SectionHeader from './SectionHeader.astro';
+
+interface SectionItem {
+  href: string;
+  title: string;
+  description: string;
+  icon: any;
+}
+
+interface Props {
+  sections: SectionItem[];
+}
+
+const { sections } = Astro.props;
+---
+
+<section aria-labelledby="docs-sections-heading" class="space-y-4">
+  <SectionHeader id="docs-sections-heading" title="Documentation map" icon={LuBookOpen} />
+  <div class="grid max-w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
+    {sections.map(({ href, title, description, icon: Icon }) => (
+      <a
+        href={href}
+        class="group min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 transition hover:border-emerald-400/25 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+      >
+        <div class="mb-4 inline-flex rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
+          <Icon className="size-5" aria-hidden="true" />
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="text-base font-semibold text-white">{title}</h3>
+            <LuArrowRight className="size-4 text-zinc-500 transition group-hover:text-emerald-300" aria-hidden="true" />
+          </div>
+          <p class="text-sm leading-6 text-zinc-400">{description}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

@@ -1,91 +1,17 @@
 ---
-import { Code } from '@astrojs/starlight/components';
 import {
   LuArrowRight,
   LuBookOpen,
-  LuBoxes,
   LuFileStack,
   LuGitBranch,
-  LuLock,
-  LuSearch,
-  LuServer,
-  LuSquareTerminal,
-  LuWorkflow,
 } from 'react-icons/lu';
 import { FaGithub } from 'react-icons/fa6';
-
-const sections = [
-  {
-    href: '/getting-started/install-and-build/',
-    title: 'Install and build',
-    description: 'Compile the Rust workspace and validate the server, client, engine, transport, and command crates.',
-    icon: LuSquareTerminal,
-  },
-  {
-    href: '/getting-started/run-local/',
-    title: 'Run a local node',
-    description: 'Start the server, connect with the client, and verify auth, compression, optional TLS/mTLS, and command flow.',
-    icon: LuServer,
-  },
-  {
-    href: '/reference/wire-protocol/',
-    title: 'Inspect the wire protocol',
-    description: 'Review framed requests, UUID request IDs, structured errors, checksums, compression flags, and responses.',
-    icon: LuWorkflow,
-  },
-  {
-    href: '/reference/commands/',
-    title: 'Use the command set',
-    description: 'Check supported commands, syntax, aliases, transaction boundaries, and current single-node semantics.',
-    icon: LuBookOpen,
-  },
-  {
-    href: '/reference/persistence-and-recovery/',
-    title: 'Understand persistence',
-    description: 'Learn snapshot flow, WAL replay, encrypted-at-rest storage, recovery ordering, and rotation behavior.',
-    icon: LuFileStack,
-  },
-  {
-    href: '/reference/security-model/',
-    title: 'Review the security model',
-    description: 'Default-on auth, optional TLS/mTLS, encrypted persistence, audit logging, and current security boundaries.',
-    icon: LuLock,
-  },
-  {
-    href: '/architecture/system-design/',
-    title: 'Read the architecture',
-    description: 'See the transport-first layering and the constraints that keep engine, server, and client concerns separated.',
-    icon: LuBoxes,
-  },
-];
-
-const facts = [
-  'Single-node key/value engine with a string-to-string model',
-  'Transport shared by client and server, with framed binary messages',
-  'Tokio-based multi-client server with auth enabled by default',
-  'Default-on zstd frame compression with explicit opt-out flags',
-  'WAL plus encrypted snapshot durability, storage keyring management, and audit logging',
-];
-
-const boundaries = [
-  'Replication and sharding are roadmap items, not implemented features',
-  'Transactions are atomic on a single node, not distributed ACID',
-  'TLS is available with --ssl, and mTLS is enabled with --tls-client-ca',
-  'Operational guidance should stay aligned with the maintained project context page',
-];
-
-const quickStart = `cargo build --workspace
-cargo run -p server -- \\
-  --bind 127.0.0.1 --port 9173
-cargo run -p client -- \\
-  --url vaylix://vaylix:vaylix@127.0.0.1:9173
-
-vaylix> ping
-PONG
-vaylix> set app:mode production
-OK
-vaylix> get app:mode
-production`;
+import { boundaries, currentState, homeSections, quickStart } from './data/home';
+import DocsMap from './home/DocsMap.astro';
+import ProfilePanel from './home/ProfilePanel.astro';
+import QuickStartPanel from './home/QuickStartPanel.astro';
+import StartHerePanel from './home/StartHerePanel.astro';
+import StatusPanel from './home/StatusPanel.astro';
 ---
 
 <div class="not-prose max-w-full space-y-8 overflow-x-clip">
@@ -93,26 +19,25 @@ production`;
     aria-labelledby="home-heading"
     class="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-2xl shadow-black/20 ring-1 ring-emerald-500/10 backdrop-blur"
   >
-    <div class="grid max-w-full gap-8 px-5 py-7 sm:px-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.9fr)] lg:px-10 lg:py-10">
+    <div class="grid max-w-full gap-8 px-5 py-7 sm:px-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)] lg:px-10 lg:py-10">
       <div class="min-w-0 space-y-6">
         <div class="flex max-w-full flex-wrap items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-zinc-400 sm:tracking-[0.22em]">
           <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
             Vaylix Docs
           </span>
-          <span>Transport-first database</span>
+          <span>Single-node database</span>
           <span aria-hidden="true" class="text-zinc-600">/</span>
-          <span>Rust workspace</span>
+          <span>Transport-first runtime</span>
         </div>
 
         <div class="space-y-4">
           <h1 id="home-heading" class="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-            Technical documentation for operating and understanding Vaylix.
+            Technical documentation for running, integrating, and maintaining Vaylix.
           </h1>
           <p class="max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
-            Use this documentation to build, run, operate, and understand Vaylix. It covers the
-            current system as implemented today: a single-node Rust key/value database with a
-            transport-first architecture, durable persistence, and clearly defined operational
-            boundaries.
+            Vaylix is a Rust key/value database with a shared transport layer, a Tokio multi-client
+            server, segmented encrypted persistence, and default-on authentication. This site
+            documents the current implementation in operational terms.
           </p>
         </div>
 
@@ -125,10 +50,10 @@ production`;
             <LuArrowRight className="size-4" aria-hidden="true" />
           </a>
           <a
-            href="/reference/project-context/"
+            href="/reference/commands/"
             class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
           >
-            Read the project context
+            Browse commands
             <LuBookOpen className="size-4" aria-hidden="true" />
           </a>
           <a
@@ -144,37 +69,7 @@ production`;
         </nav>
       </div>
 
-      <aside
-        aria-label="Current deployment profile"
-        class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-black/30 p-5"
-      >
-        <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-          <LuSearch className="size-4 text-emerald-300" aria-hidden="true" />
-          Deployment profile
-        </div>
-        <dl class="space-y-4 text-sm">
-          <div class="space-y-1">
-            <dt class="text-zinc-500">Repository</dt>
-            <dd class="font-medium text-zinc-100">vaylix/vaylix</dd>
-          </div>
-          <div class="space-y-1">
-            <dt class="text-zinc-500">Primary runtime</dt>
-            <dd class="font-medium text-zinc-100">Tokio multi-client server</dd>
-          </div>
-          <div class="space-y-1">
-            <dt class="text-zinc-500">Storage model</dt>
-            <dd class="font-medium text-zinc-100">WAL + snapshot recovery</dd>
-          </div>
-          <div class="space-y-1">
-            <dt class="text-zinc-500">Transport</dt>
-            <dd class="font-medium text-zinc-100">Framed binary over TCP/TLS</dd>
-          </div>
-          <div class="space-y-1">
-            <dt class="text-zinc-500">Request identity</dt>
-            <dd class="font-medium text-zinc-100">UUID-based request IDs</dd>
-          </div>
-        </dl>
-      </aside>
+      <ProfilePanel />
     </div>
   </section>
 
@@ -182,105 +77,14 @@ production`;
     aria-labelledby="quickstart-heading"
     class="flex max-w-full flex-col gap-6 xl:flex-row xl:items-stretch"
   >
-    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-[1.12]">
-      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-        <LuSquareTerminal className="size-4 text-emerald-300" aria-hidden="true" />
-        <h2 id="quickstart-heading">Quick start</h2>
-      </div>
-      <div class="max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/50">
-        <Code code={quickStart} lang="bash" />
-      </div>
-    </div>
-
-    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-[0.88]">
-      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-        <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
-        <h2>Read this next</h2>
-      </div>
-      <ol class="space-y-3 text-sm leading-6 text-zinc-300">
-        <li>
-          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/why-vaylix/">
-            Why Vaylix
-          </a>
-          <span class="block text-zinc-500">Scope, intent, and design posture.</span>
-        </li>
-        <li>
-          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/getting-started/run-local/">
-            Run server and client
-          </a>
-          <span class="block text-zinc-500">Local flow, credentials, and URL usage.</span>
-        </li>
-        <li>
-          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/reference/cli-reference/">
-            CLI reference
-          </a>
-          <span class="block text-zinc-500">All current flags and command-line semantics.</span>
-        </li>
-        <li>
-          <a class="font-medium text-zinc-100 hover:text-emerald-300" href="/architecture/system-design/">
-            System design
-          </a>
-          <span class="block text-zinc-500">Layering, engine isolation, and worker model.</span>
-        </li>
-      </ol>
-    </div>
+    <QuickStartPanel code={quickStart} />
+    <StartHerePanel />
   </section>
 
-  <section aria-labelledby="docs-sections-heading" class="space-y-4">
-    <div class="flex items-center gap-2 text-sm font-semibold text-zinc-100">
-      <LuBookOpen className="size-4 text-emerald-300" aria-hidden="true" />
-      <h2 id="docs-sections-heading">Documentation map</h2>
-    </div>
-    <div class="grid max-w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {sections.map(({ href, title, description, icon: Icon }) => (
-        <a
-          href={href}
-          class="group min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 transition hover:border-emerald-400/25 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-        >
-          <div class="mb-4 inline-flex rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
-            <Icon className="size-5" aria-hidden="true" />
-          </div>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between gap-3">
-              <h3 class="text-base font-semibold text-white">{title}</h3>
-              <LuArrowRight className="size-4 text-zinc-500 transition group-hover:text-emerald-300" aria-hidden="true" />
-            </div>
-            <p class="text-sm leading-6 text-zinc-400">{description}</p>
-          </div>
-        </a>
-      ))}
-    </div>
-  </section>
+  <DocsMap sections={homeSections} />
 
   <section aria-labelledby="status-heading" class="flex max-w-full flex-col gap-6 xl:flex-row xl:items-stretch">
-    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-1">
-      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-        <LuServer className="size-4 text-emerald-300" aria-hidden="true" />
-        <h2 id="status-heading">Current implementation</h2>
-      </div>
-      <ul class="space-y-3 text-sm leading-6 text-zinc-300">
-        {facts.map((item) => (
-          <li class="flex gap-3">
-            <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-
-    <div class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-zinc-950/75 p-5 ring-1 ring-white/5 sm:p-6 xl:flex-1">
-      <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-        <LuGitBranch className="size-4 text-emerald-300" aria-hidden="true" />
-        <h2>Boundaries to keep in mind</h2>
-      </div>
-      <ul class="space-y-3 text-sm leading-6 text-zinc-300">
-        {boundaries.map((item) => (
-          <li class="flex gap-3">
-            <span class="mt-2 size-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true"></span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <StatusPanel id="status-heading" title="Current implementation" icon={LuFileStack} items={currentState} />
+    <StatusPanel title="Boundaries to keep in mind" icon={LuGitBranch} items={boundaries} tone="zinc" />
   </section>
 </div>

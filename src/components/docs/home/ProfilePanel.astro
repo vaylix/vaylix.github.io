@@ -1,0 +1,27 @@
+---
+import { LuShieldCheck } from 'react-icons/lu';
+import SectionHeader from './SectionHeader.astro';
+
+const profile = [
+  ['Transport', 'VTP2 framed binary protocol with startup negotiation'],
+  ['Runtime', 'Tokio multi-client server with serialized engine worker'],
+  ['Persistence', 'Segmented WAL, encrypted snapshots, manifests, keyring'],
+  ['Security', 'Auth enabled by default, RBAC, optional TLS/mTLS, audit logging'],
+  ['Operations', 'Logical backup/restore, maintenance mode, offline PITR-oriented tools'],
+] as const;
+---
+
+<aside
+  aria-label="Current implementation profile"
+  class="min-w-0 max-w-full rounded-2xl border border-white/10 bg-black/30 p-5"
+>
+  <SectionHeader title="Current implementation profile" icon={LuShieldCheck} />
+  <dl class="space-y-4 text-sm">
+    {profile.map(([term, description]) => (
+      <div class="space-y-1">
+        <dt class="text-zinc-500">{term}</dt>
+        <dd class="font-medium text-zinc-100">{description}</dd>
+      </div>
+    ))}
+  </dl>
+</aside>

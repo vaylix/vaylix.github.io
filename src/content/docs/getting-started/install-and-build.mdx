@@ -1,6 +1,6 @@
 ---
 title: Install and Build
-description: Download a tagged Vaylix release or build the workspace locally when you need source-based installation.
+description: Download the Vaylix client binary, run the published server image, or build the project from source when needed.
 ---
 
 import ReleaseDownloads from '../../../components/docs/ReleaseDownloads.astro';
@@ -9,21 +9,20 @@ import ReleaseDownloads from '../../../components/docs/ReleaseDownloads.astro';
 
 <ReleaseDownloads />
 
-Use the tagged release archives if you want the fastest path to a working `server` or `client`
-binary. They are grouped by platform and packaged directly from the GitHub release workflow.
+Use the tagged release archives if you want the fastest path to a working `client` binary. Use the
+published container image for the `server` unless you specifically need a local binary or source
+checkout. The latest release stays expanded by default; earlier releases remain available in the
+collapsed sections below it.
 
 ## Use the Published Docker Image
 
-If you only need the server, use the prebuilt container image instead of compiling the Rust
-workspace.
-
-Pull the latest published image:
+For operational deployments, use the published image instead of building the Rust workspace:
 
 ```sh
 docker pull ghcr.io/vaylix/vaylix:latest
 ```
 
-Run it with a persistent data volume:
+Run it with a persistent volume:
 
 ```sh
 docker run \
@@ -31,59 +30,57 @@ docker run \
   -v vaylix-data:/var/lib/vaylix \
   -e VAYLIX_USER=vaylix \
   -e VAYLIX_PASSWORD=vaylix \
+  -e VAYLIX_SNAPSHOT_INTERVAL_SECONDS=300 \
   ghcr.io/vaylix/vaylix:latest
 ```
 
-The image defaults to:
+The image defaults include:
 
 - `VAYLIX_BIND=0.0.0.0`
 - `VAYLIX_PORT=9173`
 - `VAYLIX_MAX_CONNECTIONS=256`
 - `VAYLIX_WAL_SYNC=flush`
 - `VAYLIX_DATA_DIR=/var/lib/vaylix`
+- `VAYLIX_BACKUP_DIR=/var/lib/vaylix/backups`
 - `VAYLIX_USER=vaylix`
 - `VAYLIX_PASSWORD=vaylix`
 
-For the full container/runtime variable list, see
-[Docker and Persistence](/getting-started/docker-and-persistence/).
+Important runtime variables:
 
-## Build from Source
+| Variable | Purpose |
+| --- | --- |
+| `VAYLIX_BIND` | Bind address |
+| `VAYLIX_PORT` | Listener port |
+| `VAYLIX_DATA_DIR` | Persistent storage root |
+| `VAYLIX_BACKUP_DIR` | Server-local logical backup directory |
+| `VAYLIX_USER` / `VAYLIX_PASSWORD` | Bootstrap admin credentials |
+| `VAYLIX_SSL` | Enable TLS |
+| `VAYLIX_TLS_CERT` / `VAYLIX_TLS_KEY` | TLS certificate and private key |
+| `VAYLIX_TLS_CLIENT_CA` | Require client certificates signed by this CA |
+| `VAYLIX_WAL_SYNC` | WAL durability mode |
+| `VAYLIX_WAL_SEGMENT_SIZE_BYTES` | Segment rotation threshold |
+| `VAYLIX_WAL_RETAIN_SEGMENTS` | Retained sealed WAL segment count |
+| `VAYLIX_SNAPSHOT_INTERVAL_SECONDS` | Background snapshot interval |
+| `VAYLIX_EXPIRATION_SWEEP_INTERVAL_SECONDS` | Background expiration sweep interval |
+| `VAYLIX_IDLE_TIMEOUT_SECONDS` | Idle client timeout |
+| `VAYLIX_DISABLE_AUTH` | Disable auth for trusted local testing |
+| `VAYLIX_DISABLE_COMPRESSION` | Disable outbound frame compression |
+| `VAYLIX_MAX_REQUEST_PAYLOAD_BYTES` | Maximum post-framing request payload |
+| `VAYLIX_MAX_KEY_BYTES` | Maximum key size |
+| `VAYLIX_MAX_VALUE_BYTES` | Maximum string value size |
+| `VAYLIX_MAX_KEYS_PER_BATCH` | Maximum key count in multi-key commands |
+| `VAYLIX_MAX_TRANSACTION_QUEUE_LEN` | Maximum queued `MULTI` commands |
+| `VAYLIX_REQUESTS_PER_SECOND` | Sustained request rate |
+| `VAYLIX_REQUEST_BURST` | Burst request budget |
+| `VAYLIX_AUDIT_LOG_PATH` | Audit log override path |
+| `VAYLIX_SLOW_COMMAND_THRESHOLD_MS` | Slow-command audit threshold |
+| `VAYLIX_AUTH_FAILURE_WINDOW_SECONDS` | Auth failure tracking window |
+| `VAYLIX_AUTH_FAILURE_LIMIT` | Max failures before lockout |
+| `VAYLIX_AUTH_LOCKOUT_SECONDS` | Lockout duration |
+| `VAYLIX_TRANSACTION_MAX_SECONDS` | Maximum transaction lifetime |
 
-Build from source when you want to inspect the workspace, run validation locally, or modify the
-database.
+## Build from Source Only When Needed
 
-### Requirements
-
-- Rust toolchain for the main database workspace
-
-### Build the Workspace
-
-From the Vaylix project root:
-
-```sh
-cargo build --workspace
-```
-
-Release binaries:
-
-```sh
-cargo build --release -p server
-cargo build --release -p client
-```
-
-### Validate the Workspace
-
-```sh
-cargo fmt --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace
-cargo audit
-```
-
-### What This Produces
-
-The main workspace gives you:
-
-- the `server` binary for running a Vaylix node
-- the `client` binary for interactive access
-- shared `command`, `transport`, and `engine` crates used by the runtime
+If you need local development, unreleased behavior, or a custom binary build, use
+[Build from Source](/getting-started/source-build/). That page is intentionally separate from the
+runtime/operator path.

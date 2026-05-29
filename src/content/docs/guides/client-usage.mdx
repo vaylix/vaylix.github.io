@@ -1,6 +1,6 @@
 ---
 title: Client Usage
-description: Use the Vaylix REPL, output modes, connection strings, TLS, and default transport behavior.
+description: Use the Vaylix REPL, output modes, connection strings, TLS, and local-only commands.
 ---
 
 ## Output Modes
@@ -14,7 +14,7 @@ The client supports:
 Example:
 
 ```sh
-cargo run -p client -- --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=json'
+./vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=json'
 ```
 
 CLI flags override values parsed from the URL when both are provided.
@@ -25,8 +25,9 @@ These commands never go over the wire:
 
 - `help`
 - `exit`
+- `quit`
 
-That behavior keeps transport opcodes reserved for server-recognized operations only.
+That keeps transport opcodes reserved for server-recognized operations only.
 
 ## Authentication
 
@@ -38,14 +39,14 @@ Authentication is enabled by default. The development defaults are:
 Use URL credentials:
 
 ```sh
-cargo run -p client -- \
+./vaylix-client \
   --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
 ```
 
 Or pass credentials explicitly:
 
 ```sh
-cargo run -p client -- \
+./vaylix-client \
   --host 127.0.0.1 \
   --port 9173 \
   --user vaylix \
@@ -58,11 +59,10 @@ cargo run -p client -- \
 
 Outbound frame compression is enabled by default with zstd.
 
-Disable it only when connecting to a compatible local/test server where compression was also disabled or when debugging the wire format:
+Disable it only for compatible local/test peers or wire-format debugging:
 
 ```sh
-cargo run -p client -- \
-  --disable-compression
+./vaylix-client --disable-compression
 ```
 
 URL form:
@@ -71,31 +71,29 @@ URL form:
 vaylix://vaylix:vaylix@127.0.0.1:9173?compression=none
 ```
 
-Compression only changes what the client sends. It is not negotiated today; readers decompress frames based on the frame flag.
+Compression is selected during startup negotiation.
 
 ## TLS and mTLS
 
 The client uses plaintext TCP by default. Enable TLS with `--ssl` or `ssl=true` in the URL:
 
 ```sh
-cargo run -p client -- \
+./vaylix-client \
   --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true'
 ```
 
 If you need a custom CA:
 
 ```sh
-cargo run -p client -- \
+./vaylix-client \
   --ssl \
   --tls-ca-cert ./certs/ca.crt
 ```
 
-`--tls-ca-cert` without `--ssl` is treated as invalid configuration.
-
 If the server requires mTLS, provide both a client certificate chain and its matching private key:
 
 ```sh
-cargo run -p client -- \
+./vaylix-client \
   --ssl \
   --tls-ca-cert ./certs/server-ca.crt \
   --tls-client-cert ./certs/client.crt \
@@ -107,5 +105,3 @@ URL form is also supported:
 ```text
 vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true&client_cert=/certs/client.crt&client_key=/certs/client.key
 ```
-
-Client certificate options require TLS and must be provided as a pair.

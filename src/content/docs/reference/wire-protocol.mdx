@@ -1,6 +1,6 @@
 ---
 title: Wire Protocol
-description: Frame layout, opcodes, request IDs, statuses, checksums, and compression behavior.
+description: VTP2 framing, startup negotiation, request metadata, structured errors, and compression behavior.
 ---
 
 ## Layering
@@ -11,6 +11,45 @@ Flow:
 
 `Request -> transport encode -> TCP/TLS bytes -> transport decode -> Response`
 
+## Protocol Version
+
+Current protocol:
+
+- magic: `VTP2`
+- version: `2`
+
+`0.2.x` intentionally rejects pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0`.
+
+## Startup Negotiation
+
+Each connection begins with a required startup hello before command frames.
+
+Client hello fields include:
+
+- protocol version
+- client name/version
+- supported capabilities
+- desired compression mode
+- maximum frame size
+- auth intent
+
+Server hello fields include:
+
+- accepted protocol version
+- selected capabilities
+- selected compression mode
+- effective maximum frame size
+- server ID
+- structured rejection details when negotiation fails
+
+Current negotiated capabilities:
+
+- `zstd`
+- `request_deadline`
+- `server_metrics`
+- `pipelining`
+- `trace_context`
+
 ## Frame Header
 
 Each frame carries:
@@ -19,39 +58,48 @@ Each frame carries:
 | --- | --- | --- |
 | `magic` | `u32` | Protocol identification |
 | `version` | `u8` | Wire version |
-| `flags` | `u8` | Compression and future transport flags |
+| `flags` | `u8` | Per-frame behavior flags |
 | `length` | `u32` | Payload byte length |
-| `checksum` | `u32` | CRC32 of the on-wire payload |
+| `checksum` | `u32` | CRC32 of the transmitted payload bytes |
 
 Current header length: `14` bytes.
 
 ## Request and Response Bodies
 
-Requests:
+Requests contain:
 
 - `request_id: UUID`
-- `opcode: u8`
+- `opcode`
+- optional metadata:
+  - deadline milliseconds
+  - trace ID
+  - sequence number
 - request payload
 
-Responses:
+Responses contain:
 
 - `request_id: UUID`
-- `status: u8`
+- status
 - response payload
+
+## Request IDs and Pipelining
+
+Request IDs are UUIDs. They allow response correlation across pipelined requests on one connection.
+
+Transaction constraint:
+
+- while a transaction is active on a connection, sequence-tagged or pipelined requests are rejected
 
 ## Compression
 
 Current outbound compression behavior:
 
 - zstd is enabled by default for outbound frames in the server and client binaries
+- compression is selected during startup negotiation
 - `--disable-compression` disables outbound compression on that process
-- URL query `compression=none|zstd` can configure the client connection
+- URL query `compression=none|zstd` configures the client
 
 Compression is frame-level, not payload-field-level. The checksum covers the compressed bytes that were actually transmitted.
-
-The reader checks the frame flag and transparently decompresses before request or response decoding.
-
-Compression is not negotiated yet. Mixed-version or custom clients should set matching expectations explicitly.
 
 ## Status Codes
 
@@ -61,41 +109,6 @@ Compression is not negotiated yet. Mixed-version or custom clients should set ma
 | `Error` | Structured remote error payload |
 | `NotFound` | Missing value / key |
 
-## Opcodes
-
-Current wire opcodes include:
-
-- `AUTH`
-- `PING`
-- `GET`
-- `GETDEL`
-- `GETEX`
-- `SET`
-- `SETNX`
-- `DEL`
-- `EXISTS`
-- `MGET`
-- `MSET`
-- `INCR`
-- `DECR`
-- `EXPIRE`
-- `TTL`
-- `PERSIST`
-- `RENAME`
-- `RENAMENX`
-- `SCAN`
-- `DBSIZE`
-- `INFO`
-- `METRICS`
-- `LIST`
-- `CLEAR`
-- `COUNT`
-- `SAVE`
-- `SNAPSHOT`
-- `MULTI`
-- `EXEC`
-- `DISCARD`
-
 ## Remote Errors
 
 Remote failures are structured rather than ad hoc strings:
@@ -104,4 +117,21 @@ Remote failures are structured rather than ad hoc strings:
 - friendly name
 - message
 
-That makes the wire format more suitable for future SDKs and tooling.
+That makes the protocol safer for clients, tooling, and future SDKs.
+
+## Current Opcode Surface
+
+Current wire opcodes cover:
+
+- auth and ping
+- string reads and writes
+- numeric operations
+- TTL commands
+- rename and scan
+- info and metrics
+- logical backup/restore
+- maintenance mode
+- user/role/permission management
+- transaction controls
+
+For exact user-facing syntax, use [Command Reference](/reference/commands/).

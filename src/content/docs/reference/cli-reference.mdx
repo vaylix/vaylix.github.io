@@ -1,73 +1,106 @@
 ---
 title: CLI Reference
-description: Command-line flags for the Vaylix server and client binaries.
+description: Command-line flags, environment variables, and offline subcommands for the Vaylix server and client binaries.
 ---
 
 ## Server Flags
 
 ### Networking and Security
 
-| Flag | Meaning |
-| --- | --- |
-| `--bind` | Bind address. Default `127.0.0.1`. |
-| `--port` | Port. Default `9173`. |
-| `--ssl` | Enable TLS for server transport. TLS is disabled by default. |
-| `--tls-cert` | PEM certificate chain, required when TLS is enabled. |
-| `--tls-key` | PEM private key, required when TLS is enabled. |
-| `--tls-client-ca` | PEM CA bundle used to require and verify client certificates for mTLS. |
-| `--user` | Username. Default `vaylix`. |
-| `--password` | Password. Default `vaylix`. |
-| `--disable-auth` | Disable auth for trusted local testing only. |
+| Flag | Environment | Meaning |
+| --- | --- | --- |
+| `--bind` | `VAYLIX_BIND` | Bind address. Default `127.0.0.1`. |
+| `--port` | `VAYLIX_PORT` | Listener port. Default `9173`. |
+| `--max-connections` | `VAYLIX_MAX_CONNECTIONS` | Maximum concurrent sessions. |
+| `--ssl` | `VAYLIX_SSL` | Enable TLS for server transport. Disabled by default. |
+| `--tls-cert` | `VAYLIX_TLS_CERT` | PEM certificate chain, required when TLS is enabled. |
+| `--tls-key` | `VAYLIX_TLS_KEY` | PEM private key, required when TLS is enabled. |
+| `--tls-client-ca` | `VAYLIX_TLS_CLIENT_CA` | PEM CA bundle used to require and verify client certificates for mTLS. |
+| `--user` | `VAYLIX_USER` | Bootstrap/admin username. Default `vaylix`. |
+| `--password` | `VAYLIX_PASSWORD` | Bootstrap/admin password. Default `vaylix`. |
+| `--disable-auth` | `VAYLIX_DISABLE_AUTH` | Disable auth for trusted local testing only. |
 
-### Persistence and Runtime
+### Persistence and Maintenance
 
-| Flag | Meaning |
-| --- | --- |
-| `--data-dir` | Persistent data directory. |
-| `--wal-sync` | `buffered`, `flush`, or `sync`. |
-| `--snapshot-interval-seconds` | Periodic background snapshots. |
-| `--expiration-sweep-interval-seconds` | TTL sweeper interval. |
-| `--idle-timeout-seconds` | Idle disconnect timeout. |
-| `--audit-log-path` | Override audit log file path. |
+| Flag | Environment | Meaning |
+| --- | --- | --- |
+| `--data-dir` | `VAYLIX_DATA_DIR` | Persistent data directory. |
+| `--backup-dir` | `VAYLIX_BACKUP_DIR` | Server-local directory for logical backup files. |
+| `--wal-sync` | `VAYLIX_WAL_SYNC` | WAL durability mode: `buffered`, `flush`, or `sync`. |
+| `--wal-segment-size-bytes` | `VAYLIX_WAL_SEGMENT_SIZE_BYTES` | Max size of one WAL segment before rotation. |
+| `--wal-retain-segments` | `VAYLIX_WAL_RETAIN_SEGMENTS` | Number of sealed WAL segments retained after pruning. |
+| `--snapshot-interval-seconds` | `VAYLIX_SNAPSHOT_INTERVAL_SECONDS` | Periodic background snapshot interval. |
+| `--expiration-sweep-interval-seconds` | `VAYLIX_EXPIRATION_SWEEP_INTERVAL_SECONDS` | Background TTL sweeper interval. |
+| `--idle-timeout-seconds` | `VAYLIX_IDLE_TIMEOUT_SECONDS` | Disconnect idle clients after this many seconds. |
+| `--audit-log-path` | `VAYLIX_AUDIT_LOG_PATH` | Override audit log file path. |
+| `--slow-command-threshold-ms` | `VAYLIX_SLOW_COMMAND_THRESHOLD_MS` | Threshold for slow-command audit events. Use `0` to disable. |
 
-### Guardrails and Compression
+### Guardrails and Transaction Controls
 
-| Flag | Meaning |
-| --- | --- |
-| `--max-connections` | Concurrent session cap. |
-| `--max-request-payload-bytes` | Max accepted payload size after framing. |
-| `--max-key-bytes` | Max key size. |
-| `--max-value-bytes` | Max value size. |
-| `--max-keys-per-batch` | Max key count in batch commands. |
-| `--max-transaction-queue-len` | Max queued commands inside `MULTI`. |
-| `--requests-per-second` | Sustained per-connection rate. |
-| `--request-burst` | Burst budget for rate limiting. |
-| `--disable-compression` | Disable default outbound zstd frame compression. |
+| Flag | Environment | Meaning |
+| --- | --- | --- |
+| `--disable-compression` | `VAYLIX_DISABLE_COMPRESSION` | Disable default outbound zstd frame compression. |
+| `--max-request-payload-bytes` | `VAYLIX_MAX_REQUEST_PAYLOAD_BYTES` | Max accepted post-framing payload size. |
+| `--max-key-bytes` | `VAYLIX_MAX_KEY_BYTES` | Max key size. |
+| `--max-value-bytes` | `VAYLIX_MAX_VALUE_BYTES` | Max string value size. |
+| `--max-keys-per-batch` | `VAYLIX_MAX_KEYS_PER_BATCH` | Max key count in multi-key commands. |
+| `--max-transaction-queue-len` | `VAYLIX_MAX_TRANSACTION_QUEUE_LEN` | Max queued commands inside `MULTI`. |
+| `--requests-per-second` | `VAYLIX_REQUESTS_PER_SECOND` | Sustained per-connection request rate. |
+| `--request-burst` | `VAYLIX_REQUEST_BURST` | Burst budget for the token-bucket limiter. |
+| `--transaction-max-seconds` | `VAYLIX_TRANSACTION_MAX_SECONDS` | Maximum open transaction lifetime before automatic discard. |
+| `--auth-failure-window-seconds` | `VAYLIX_AUTH_FAILURE_WINDOW_SECONDS` | Rolling auth failure window. |
+| `--auth-failure-limit` | `VAYLIX_AUTH_FAILURE_LIMIT` | Maximum failures before lockout. |
+| `--auth-lockout-seconds` | `VAYLIX_AUTH_LOCKOUT_SECONDS` | Lockout duration after exceeding the auth failure limit. |
+
+## Offline Server Subcommands
+
+### Storage Maintenance
+
+```sh
+vaylix storage verify --data-dir /var/lib/vaylix
+vaylix storage migrate --data-dir /var/lib/vaylix
+```
+
+- `storage verify` validates current persisted storage
+- `storage migrate` upgrades legacy monolithic `wal.log` storage into the segmented WAL layout
+
+### PITR-Oriented Offline Restore
+
+```sh
+vaylix pitr inspect --data-dir /var/lib/vaylix
+
+vaylix pitr restore \
+  --source-dir /var/lib/vaylix \
+  --target-dir /tmp/vaylix-restore \
+  --to-sequence 1234
+```
+
+You can target either `--to-sequence` or `--to-timestamp-ms`.
 
 ## Client Flags
 
 | Flag | Meaning |
 | --- | --- |
-| `--url` | Full connection string, e.g. `vaylix://user:password@127.0.0.1:9173`. |
-| `--host` | Host when `--url` is not used. |
-| `--port` | Port when `--url` is not used. |
+| `--url` | Full connection string, for example `vaylix://user:password@127.0.0.1:9173`. |
+| `--host` | Host when `--url` is not used. Default `127.0.0.1`. |
+| `--port` | Port when `--url` is not used. Default `9173`. |
 | `--ssl` | Enable TLS. Plain TCP is used by default. |
 | `--tls-ca-cert` | Custom CA bundle for server verification. |
 | `--tls-client-cert` | Client certificate chain used for mTLS. Requires TLS and `--tls-client-key`. |
 | `--tls-client-key` | Client private key used for mTLS. Requires TLS and `--tls-client-cert`. |
 | `--user` | Username override. |
 | `--password` | Password override. |
-| `--disable-auth` | Skip auth handshake for trusted local testing only. |
+| `--disable-auth` | Skip automatic `AUTH` on connect. |
 | `--output` | `plain`, `table`, or `json`. |
 | `--disable-compression` | Disable default outbound zstd frame compression. |
 
-## Connection String Example
+## Connection String
 
 ```text
-vaylix://vaylix:vaylix@127.0.0.1:9173?ssl=true&output=json&compression=zstd
+vaylix://user:password@127.0.0.1:9173?ssl=true&output=json&compression=zstd
 ```
 
-Supported URL query parameters include:
+Supported URL query parameters:
 
 - `ssl=true`
 - `output=plain|table|json`
@@ -77,4 +110,4 @@ Supported URL query parameters include:
 - `auth=false`
 - `compression=none|zstd`
 
-CLI flags take precedence over values parsed from the URL.
+CLI flags override values parsed from the URL.

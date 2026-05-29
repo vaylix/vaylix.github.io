@@ -1,92 +1,436 @@
 ---
 title: Command Reference
-description: User-facing Vaylix commands, syntax, and current single-node semantics.
+description: Current Vaylix command grammar, grouped by purpose, with concise examples and single-node semantics.
 ---
 
-Vaylix commands are parsed by the shared `command` crate before being encoded into transport requests. The client keeps `help` and `exit` local; server-recognized commands are sent over the framed binary transport.
+Vaylix commands are parsed by the shared `command` crate before being encoded into transport requests. The client keeps `help`, `exit`, and `quit` local; server-recognized commands go over the framed binary transport.
 
 ## Connection and Diagnostics
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `AUTH` | `auth USERNAME PASSWORD` | Authenticates the current connection when auth is enabled. |
-| `PING` | `ping [message]` | Returns `PONG` or the supplied message. |
-| `INFO` | `info` | Returns engine and storage metadata as key/value fields. |
-| `METRICS` | `metrics` | Returns server runtime metrics as key/value fields. |
+### `AUTH`
 
-## String Keys
+```text
+auth <username> <password>
+```
 
-The current data model is `String -> String`.
+Authenticates the current connection when auth is enabled.
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `GET` | `get KEY` | Reads a value. Missing keys return `NOT_FOUND`. |
-| `SET` | `set KEY VALUE [nx\|xx] [ex SECONDS\|px MILLIS] [keepttl] [get]` | Writes a value with optional condition, expiration, TTL preservation, and previous-value return. |
-| `SETNX` | `setnx KEY VALUE` | Writes only when the key does not already exist. |
-| `GETDEL` | `getdel KEY` | Reads and deletes a key atomically. |
-| `GETEX` | `getex KEY [ex SECONDS\|px MILLIS\|persist]` | Reads a key and updates or clears its expiration. |
-| `MGET` | `mget KEY [KEY ...]` | Reads multiple keys. |
-| `MSET` | `mset KEY VALUE [KEY VALUE ...]` | Writes multiple key/value pairs. |
-| `DEL` | `del KEY [KEY ...]` | Deletes one or more keys and returns a count. |
-| `DELETE` | `delete KEY [KEY ...]` | Alias for `DEL`. |
-| `EXISTS` | `exists KEY` | Returns whether a key exists. |
+Example:
+
+```text
+auth vaylix vaylix
+```
+
+### `PING`
+
+```text
+ping [message]
+```
+
+Returns `PONG` or the supplied message.
+
+Example:
+
+```text
+ping healthcheck
+```
+
+### `INFO`
+
+```text
+info
+```
+
+Returns deterministic key/value fields with section prefixes such as `server.*`, `transport.*`, `persistence.*`, `security.*`, `runtime.*`, and `metrics.*`.
+
+### `METRICS`
+
+```text
+metrics
+metrics prom
+```
+
+`metrics` returns OTel-aligned key/value metrics like `vaylix.server.request.count`. `metrics prom` returns the same contract in Prometheus text exposition form.
+
+Example:
+
+```text
+metrics prom
+```
+
+## String Data Commands
+
+The current user-visible data model is `String -> String`.
+
+### `GET`
+
+```text
+get <key>
+```
+
+Reads a value. Missing keys return `NOT_FOUND`.
+
+Example:
+
+```text
+get app:mode
+```
+
+### `SET`
+
+```text
+set <key> <value> [nx|xx] [ex <seconds>|px <millis>] [keepttl] [get]
+```
+
+Writes a value with optional conditional write behavior, expiration, TTL preservation, and previous-value return.
+
+Example:
+
+```text
+set app:mode production ex 60
+```
+
+### `SETNX`
+
+```text
+setnx <key> <value>
+```
+
+Writes only when the key does not already exist.
+
+### `GETDEL`
+
+```text
+getdel <key>
+```
+
+Reads and deletes a key atomically.
+
+### `GETEX`
+
+```text
+getex <key> [ex <seconds>|px <millis>|persist]
+```
+
+Reads a key and updates or clears its expiration.
+
+### `MGET`
+
+```text
+mget <key> [key ...]
+```
+
+Reads multiple keys in one request.
+
+Example:
+
+```text
+mget app:mode app:region
+```
+
+### `MSET`
+
+```text
+mset <key> <value> [key value ...]
+```
+
+Writes multiple key/value pairs in one request.
+
+### `DEL` / `DELETE`
+
+```text
+del <key> [key ...]
+delete <key> [key ...]
+```
+
+Deletes one or more keys and returns the deleted count.
+
+### `EXISTS`
+
+```text
+exists <key>
+```
+
+Returns whether the key exists.
 
 ## Numeric Operations
 
-Numeric operations treat the stored value as a signed integer encoded as a string.
+Numeric commands interpret the stored string as a signed integer.
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `INCR` | `incr KEY` | Increments the integer value and returns the new integer. |
-| `DECR` | `decr KEY` | Decrements the integer value and returns the new integer. |
+### `INCR`
 
-If a value is not parseable as an integer, the command returns a structured error.
+```text
+incr <key>
+```
 
-## Expiration
+Increments a numeric string and returns the new value.
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `EXPIRE` | `expire KEY SECONDS` | Sets a key TTL in whole seconds. |
-| `TTL` | `ttl KEY` | Returns the remaining TTL using the engine's integer TTL convention. |
-| `PERSIST` | `persist KEY` | Removes a key's expiration if present. |
+### `DECR`
 
-Expired keys are purged during normal command paths, background sweeps, and snapshot creation.
+```text
+decr <key>
+```
+
+Decrements a numeric string and returns the new value.
+
+If the current value is not parseable as an integer, the server returns a structured error.
+
+## Expiration and Key Lifecycle
+
+### `EXPIRE`
+
+```text
+expire <key> <seconds>
+```
+
+Sets a TTL in whole seconds.
+
+### `TTL`
+
+```text
+ttl <key>
+```
+
+Returns the remaining TTL using the current integer TTL convention.
+
+### `PERSIST`
+
+```text
+persist <key>
+```
+
+Removes a key expiration if present.
+
+Expired keys are purged on normal command paths, during background sweeps, and during snapshotting.
 
 ## Rename and Scan
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `RENAME` | `rename SOURCE DESTINATION` | Renames a key, replacing the destination if needed. |
-| `RENAMENX` | `renamenx SOURCE DESTINATION` | Renames only when the destination does not exist. |
-| `SCAN` | `scan CURSOR [match PATTERN] [count N]` | Returns a cursor page of keys. |
+### `RENAME`
+
+```text
+rename <source> <destination>
+```
+
+Renames a key, replacing the destination if needed.
+
+### `RENAMENX`
+
+```text
+renamenx <source> <destination>
+```
+
+Renames a key only when the destination does not exist.
+
+### `SCAN`
+
+```text
+scan <cursor> [match <pattern>] [count <n>]
+```
+
+Returns a cursor page of keys in deterministic sorted order.
+
+Example:
+
+```text
+scan 0 match app:* count 10
+```
 
 ## Database Introspection and Maintenance
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `DBSIZE` | `dbsize` | Returns the live key count. |
-| `COUNT` | `count` | Alias-style count command for the live key count. |
-| `LIST` | `list` | Returns live key/value entries. |
-| `CLEAR` | `clear` | Clears all keys. |
-| `FLUSHDB` | `flushdb` | Alias for clearing the current database. |
-| `SAVE` | `save` | Writes a snapshot and rotates/truncates WAL state through the engine snapshot path. |
-| `SNAPSHOT` | `snapshot` | Alias-style snapshot command. |
+### `DBSIZE` and `COUNT`
+
+```text
+dbsize
+count
+```
+
+Both return the live key count.
+
+### `LIST`
+
+```text
+list
+```
+
+Returns live key/value entries.
+
+### `CLEAR` and `FLUSHDB`
+
+```text
+clear
+flushdb
+```
+
+Clears the current keyspace. When auth/RBAC is enabled, this requires the `clear` permission.
+
+### `SAVE` and `SNAPSHOT`
+
+```text
+save
+snapshot
+```
+
+Write a physical encrypted snapshot, seal the active WAL segment, open a new active segment, and prune retained sealed segments according to runtime policy.
+
+## Logical Backup and Restore
+
+### `BACKUP`
+
+```text
+backup
+backup to <path>
+backup verify <logical-dump-json>
+backup verify from <path>
+```
+
+Logical backup commands operate on JSON dumps rather than physical storage files.
+
+- `backup` returns the logical dump inline
+- `backup to <path>` writes a server-local dump under the configured backup directory
+- `backup verify ...` validates dump structure and, for file-backed dumps, verifies the manifest sidecar
+
+Example:
+
+```text
+backup to nightly.json
+```
+
+### `RESTORE`
+
+```text
+restore <logical-dump-json>
+restore from <path>
+restore check <logical-dump-json>
+restore check from <path>
+```
+
+Restore commands replace the current keyspace with the live entries from a validated logical backup. `restore check ...` performs validation without mutating engine state or WAL.
+
+Example:
+
+```text
+restore check from nightly.json
+```
 
 ## Transactions
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `MULTI` | `multi` | Starts queueing commands for the current session. |
-| `EXEC` | `exec` | Applies the queued commands as one single-node atomic batch if every command succeeds. |
-| `DISCARD` | `discard` | Drops the queued transaction. |
+### `MULTI`
 
-The current transaction model is single-node and serialized through the engine worker. It is not MVCC, distributed, or replication-aware.
+```text
+multi
+```
+
+Starts queueing commands for the current connection.
+
+### `EXEC`
+
+```text
+exec
+```
+
+Applies the queued commands as one single-node atomic WAL-backed batch if every queued command succeeds.
+
+### `DISCARD`
+
+```text
+discard
+```
+
+Drops the queued transaction.
+
+Current boundaries:
+
+- transactions are single-node only
+- transaction lifetimes are bounded by a server-side timeout
+- sequence-tagged or pipelined requests are rejected while a transaction is active
+- maintenance mode rejects transaction entry and commit
+
+## Maintenance Mode
+
+### `MAINTENANCE`
+
+```text
+maintenance on
+maintenance off
+maintenance status
+```
+
+Maintenance mode is a persisted read-only admin mode. It survives restart through a sentinel file under the data directory.
+
+While maintenance mode is enabled:
+
+- reads, `info`, `metrics`, `metrics prom`, backup verification flows, `show *`, `whoami`, and `maintenance status` remain available
+- mutating writes, restore flows, and transaction commands are rejected
+
+## User, Role, and Grant Management
+
+These commands are server-side administrative commands. The engine remains unaware of users and roles.
+
+### User and Role Lifecycle
+
+```text
+create user <username> password <password>
+alter user <username> password <password>
+drop user <username>
+create role <role>
+drop role <role>
+```
+
+Example:
+
+```text
+create user jane password SecurePass123
+```
+
+Password policy currently requires at least 12 characters with at least one ASCII letter and one ASCII digit.
+
+### Role Assignment
+
+```text
+grant role <role> to <username>
+revoke role <role> from <username>
+```
+
+Example:
+
+```text
+grant role readonly to jane
+```
+
+### Permission Grants
+
+```text
+grant permission <permission> [on <pattern>] to <role>
+revoke permission <permission> [on <pattern>] from <role>
+```
+
+The `on <pattern>` clause is optional. When omitted, the pattern defaults to `*`.
+
+Example:
+
+```text
+grant permission read on app:* to readonly
+```
+
+### Grant Introspection
+
+```text
+show users
+show roles
+show grants
+show grants for user <username>
+show grants for role <role>
+whoami
+```
+
+Use `show grants` for the current authenticated user, or the `for user` / `for role` forms for administrative inspection.
 
 ## Client-Local Commands
 
-| Command | Syntax | Behavior |
-| --- | --- | --- |
-| `HELP` | `help` | Prints local client help. |
-| `EXIT` | `exit` | Leaves the REPL. |
+```text
+help
+exit
+quit
+```
 
-These commands are intentionally not sent to the server.
+These commands are handled by the client REPL and are never sent to the server.

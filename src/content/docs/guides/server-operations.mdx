@@ -1,25 +1,26 @@
 ---
 title: Server Operations
-description: Configure runtime limits, audit logging, TLS, persistence, and operational controls.
+description: Configure runtime limits, TLS, persistence, audit logging, maintenance mode, and offline storage tooling.
 ---
 
 ## Important Server Flags
 
 | Flag | Purpose |
 | --- | --- |
-| `--bind` | Listener address |
-| `--port` | Listener port |
+| `--bind` / `--port` | Listener address and port |
 | `--data-dir` | Persistent storage root |
-| `--user` / `--password` | Auth credentials; defaults are local-development values |
-| `--disable-auth` | Disable authentication for trusted local testing only |
+| `--backup-dir` | Directory for server-local logical backup files |
+| `--user` / `--password` | Bootstrap/admin credentials |
+| `--disable-auth` | Disable auth for trusted local testing only |
 | `--ssl` | Enable TLS |
 | `--tls-cert` / `--tls-key` | TLS certificate and private key |
 | `--tls-client-ca` | Require client certificates signed by this CA bundle |
 | `--wal-sync` | WAL durability policy |
+| `--wal-segment-size-bytes` | Segment rotation threshold |
+| `--wal-retain-segments` | Sealed segment retention count |
 | `--snapshot-interval-seconds` | Periodic background snapshotting |
 | `--expiration-sweep-interval-seconds` | Background TTL sweeper |
 | `--idle-timeout-seconds` | Disconnect idle clients |
-| `--disable-compression` | Disable default outbound zstd frame compression |
 | `--audit-log-path` | Override audit log location |
 
 ## Default Runtime Behavior
@@ -30,61 +31,88 @@ Unless configured otherwise, the server starts with:
 - auth enabled
 - outbound zstd frame compression enabled
 - server-managed encrypted persistence under `--data-dir`
-- append-only JSONL audit logging
+- append-only audit logging
+- maintenance mode disabled
 
-Enable TLS explicitly for production-facing deployments:
+For runtime deployment, prefer the published server image:
 
 ```sh
-cargo run -p server -- \
-  --ssl \
-  --tls-cert ./certs/server.crt \
-  --tls-key ./certs/server.key
+docker run --rm \
+  -p 9173:9173 \
+  -v vaylix-data:/var/lib/vaylix \
+  -v "$(pwd)/certs:/certs:ro" \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=vaylix \
+  -e VAYLIX_SSL=true \
+  -e VAYLIX_TLS_CERT=/certs/server.crt \
+  -e VAYLIX_TLS_KEY=/certs/server.key \
+  ghcr.io/vaylix/vaylix:latest
 ```
 
 Require mTLS by adding a client CA bundle:
 
 ```sh
-cargo run -p server -- \
-  --ssl \
-  --tls-cert ./certs/server.crt \
-  --tls-key ./certs/server.key \
-  --tls-client-ca ./certs/client-ca.crt
+docker run --rm \
+  -p 9173:9173 \
+  -v vaylix-data:/var/lib/vaylix \
+  -v "$(pwd)/certs:/certs:ro" \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=vaylix \
+  -e VAYLIX_SSL=true \
+  -e VAYLIX_TLS_CERT=/certs/server.crt \
+  -e VAYLIX_TLS_KEY=/certs/server.key \
+  -e VAYLIX_TLS_CLIENT_CA=/certs/client-ca.crt \
+  ghcr.io/vaylix/vaylix:latest
 ```
 
-When `--tls-client-ca` is set, clients must present a certificate chaining to that CA. Application auth still runs after the TLS handshake unless `--disable-auth` is explicitly used for trusted testing.
+## Maintenance Mode
 
-## Abuse Controls
+Maintenance mode is an operational read-only admin mode:
 
-The server currently enforces:
+```text
+maintenance on
+maintenance status
+maintenance off
+```
 
-- request payload byte limits
-- key size limits
-- value size limits
-- batch key-count limits
-- per-session transaction queue limits
-- token-bucket request rate limiting
-- idle connection timeouts
+When enabled, the node keeps read and inspection paths available while rejecting mutating writes, restore flows, and transaction entry/commit.
 
-These are runtime guardrails, not a full denial-of-service strategy.
+## WAL and Snapshot Behavior
+
+Current physical persistence behavior:
+
+- WAL lives under `<data-dir>/wal/`
+- snapshots write `snapshot.bin`
+- manifests write `manifest.bin`
+- snapshots seal the active WAL segment, create a new active segment, and prune old sealed segments according to retention
 
 ## Audit Logging
 
-Audit logging is enabled automatically. By default the server writes:
+Audit logging is enabled automatically.
+
+Default path:
 
 ```text
 <data-dir>/audit.log
 ```
 
-Override it if needed:
+The log is SHA-256 hash chained and verified on startup.
+
+## Offline Storage Tooling
+
+Use the main `vaylix` binary for offline storage work:
 
 ```sh
-cargo run -p server -- --audit-log-path /var/log/vaylix/audit.log
+vaylix storage verify --data-dir /var/lib/vaylix
+vaylix storage migrate --data-dir /var/lib/vaylix
+vaylix pitr inspect --data-dir /var/lib/vaylix
 ```
 
-## WAL Durability Modes
+Offline PITR-oriented restore writes a new target directory:
 
-- `buffered`: let the OS decide when to flush
-- `flush`: flush userspace buffers after append
-- `sync`: call through to kernel sync for each append
-
-For most local or early-stage deployments, `flush` is the practical default.
+```sh
+vaylix pitr restore \
+  --source-dir /var/lib/vaylix \
+  --target-dir /tmp/vaylix-restore \
+  --to-sequence 1234
+```
