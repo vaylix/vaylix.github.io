@@ -12,7 +12,9 @@ Use it when Vaylix is part of an application codebase and you need direct transp
 The SDK is:
 
 - a Node.js client
+- Node.js `>= 20.19.0`
 - direct TCP/TLS transport, not a wrapper around the Rust CLI
+- zstd compression via a native Node binding with prebuilt binaries
 - factory-led public API with `createClient()` and `createPool()`
 - aligned with the current VTP2 transport and the structured `EXEC` result payload introduced with server `0.3.0`
 
@@ -21,6 +23,12 @@ The SDK is:
 ```sh
 npm install @vaylix/client
 ```
+
+Runtime assumptions:
+
+- Node.js only
+- Node `>= 20.19.0`
+- no browser or Deno support
 
 ## When to Use It
 
