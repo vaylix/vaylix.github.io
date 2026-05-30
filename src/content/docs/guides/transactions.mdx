@@ -24,6 +24,19 @@ Inside one session:
 
 This gives atomic single-node commit behavior for queued data commands.
 
+## `EXEC` Result Shape
+
+From `0.3.0` onward, successful `EXEC` responses are returned as typed transport results rather than a rendered string list.
+
+That matters for programmatic clients and SDKs:
+
+- booleans remain booleans
+- counts remain counts
+- integers remain integers
+- string values remain distinguishable from `NOT_FOUND` and other rendered sentinel text
+
+This is a transaction-wire breaking change for `0.2.x` clients that decoded `EXEC` as a simple string array.
+
 ## Current Limits
 
 - transactions are serialized through the engine worker

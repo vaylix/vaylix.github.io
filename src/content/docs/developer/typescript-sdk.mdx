@@ -1,0 +1,147 @@
+---
+title: TypeScript SDK
+description: Using the official @vaylix/client package from Node.js applications.
+---
+
+The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme).
+
+Use it when Vaylix is part of an application codebase and you need direct transport access rather than the interactive CLI.
+
+## What It Is
+
+The SDK is:
+
+- a Node.js client
+- direct TCP/TLS transport, not a wrapper around the Rust CLI
+- factory-led public API with `createClient()` and `createPool()`
+- aligned with the current VTP2 transport and the structured `EXEC` result payload introduced with server `0.3.0`
+
+## Install
+
+```sh
+npm install @vaylix/client
+```
+
+## When to Use It
+
+Use the SDK for:
+
+- backend services
+- worker processes
+- scripts and automation
+- application-side transaction handling
+- programmatic metrics/info access
+
+Use the Rust client binary when you want:
+
+- interactive manual inspection
+- shell-driven operator workflows
+- local debugging against a live node
+
+## Basic Example
+
+```ts
+import { createClient } from '@vaylix/client';
+
+const client = createClient({
+  url: 'vaylix://vaylix:vaylix@127.0.0.1:9173',
+});
+
+await client.connect();
+
+try {
+  await client.set('app:greeting', 'hello');
+  console.log(await client.get('app:greeting'));
+} finally {
+  await client.close();
+}
+```
+
+## `DATABASE_URL`
+
+If no explicit `url` is provided, the SDK reads `process.env.DATABASE_URL`.
+
+Example:
+
+```text
+DATABASE_URL=vaylix://vaylix:vaylix@127.0.0.1:9173
+```
+
+The SDK does not load `.env` files automatically. That remains the application’s responsibility.
+
+## Pooling
+
+```ts
+import { createPool } from '@vaylix/client';
+
+const pool = createPool({
+  url: 'vaylix://vaylix:vaylix@127.0.0.1:9173',
+  max: 4,
+});
+
+await pool.connect();
+
+try {
+  await pool.set('pool:key', 'value');
+  console.log(await pool.get('pool:key'));
+} finally {
+  await pool.close();
+}
+```
+
+## Transactions
+
+Transactions are explicit:
+
+```ts
+const tx = await client.transaction();
+
+tx.set('tx:key', 'alpha');
+tx.get('tx:key');
+tx.exists('tx:key');
+
+const result = await tx.exec();
+```
+
+Example `EXEC` result:
+
+```ts
+[
+  { status: 'OK' },
+  { status: 'OK', value: 'alpha' },
+  { status: 'OK', boolean: true },
+]
+```
+
+The structured `EXEC` transport payload in server `0.3.0` is what makes this result shape reliable. Older stringified transaction results were lossy.
+
+## Error Types
+
+The SDK exports typed errors such as:
+
+- `ConnectionError`
+- `TimeoutError`
+- `ProtocolError`
+- `AuthenticationError`
+- `AuthorizationError`
+- `RemoteCommandError`
+
+Use these to distinguish transport failures from server-side command failures.
+
+## Current Scope
+
+The current SDK surface covers:
+
+- connect / close
+- auth
+- `ping`
+- `get`, `set`, `del`, `exists`
+- `mget`, `mset`
+- `expire`, `ttl`, `persist`
+- `info`
+- `metrics`
+- `metricsProm`
+- transactions
+- simple pooling
+
+It is intentionally not a full admin/operator SDK yet.

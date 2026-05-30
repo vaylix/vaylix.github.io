@@ -53,6 +53,7 @@ Current state:
 - session transactions are queued with `MULTI` / `EXEC` / `DISCARD`
 - `EXEC` commits as one atomic WAL-backed batch on a single node
 - transactions are bounded by a server-side lifetime limit
+- successful `EXEC` responses now use a structured typed transport payload instead of a lossy string list
 
 Not yet true:
 
@@ -80,7 +81,8 @@ Current negotiated capabilities:
 - `pipelining`
 - `trace_context`
 
-`0.2.x` intentionally rejects pre-v2 frames. `0.1.0` and `0.2.0` are not wire-compatible.
+`0.2.x` and `0.3.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed result payload. `0.2.x` clients are therefore not transaction-wire-compatible with `0.3.0` servers.
 
 ## TLS
 

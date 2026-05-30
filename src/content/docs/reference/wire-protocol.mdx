@@ -18,7 +18,9 @@ Current protocol:
 - magic: `VTP2`
 - version: `2`
 
-`0.2.x` intentionally rejects pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0`.
+`0.2.x` and `0.3.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+
+Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed payload. `0.2.x` transaction clients that assume `EXEC` decodes as `Response::strings(...)` are not wire-compatible with `0.3.0` servers for transaction result decoding.
 
 ## Startup Negotiation
 
@@ -82,6 +84,8 @@ Responses contain:
 - status
 - response payload
 
+Most responses use the same payload families as `0.2.x`, but successful `EXEC` responses now use a dedicated typed result payload rather than flattened strings.
+
 ## Request IDs and Pipelining
 
 Request IDs are UUIDs. They allow response correlation across pipelined requests on one connection.
@@ -119,6 +123,33 @@ Remote failures are structured rather than ad hoc strings:
 
 That makes the protocol safer for clients, tooling, and future SDKs.
 
+## Structured `EXEC` Results
+
+Successful `EXEC` responses are now encoded as a typed result list.
+
+Shape:
+
+- `u32 result_count`
+- repeated `result_count` times:
+  - `u8 result_kind`
+  - kind-specific payload
+
+Current result kinds:
+
+| Kind | Meaning |
+| --- | --- |
+| `0x00` | `ok` |
+| `0x01` | `not_found` |
+| `0x02` | string value |
+| `0x03` | boolean |
+| `0x04` | count (`u64`) |
+| `0x05` | integer (`i64`) |
+| `0x06` | entry list |
+| `0x07` | string list |
+| `0x08` | scan payload |
+
+This fixes the old transaction result ambiguity where values like `"true"`, `"42"`, or `"NOT_FOUND"` could not be reliably distinguished from real string data after stringification.
+
 ## Current Opcode Surface
 
 Current wire opcodes cover:
@@ -133,5 +164,7 @@ Current wire opcodes cover:
 - maintenance mode
 - user/role/permission management
 - transaction controls
+
+The transport itself remains protocol version `2`; the `0.3.0` `EXEC` payload change is a contract refinement within VTP2, not a new protocol version.
 
 For exact user-facing syntax, use [Command Reference](/reference/commands/).

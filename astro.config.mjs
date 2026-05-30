@@ -63,6 +63,12 @@ export default defineConfig({
           ]
         },
         {
+          label: 'Developer',
+          items: [
+            { label: 'TypeScript SDK', slug: 'developer/typescript-sdk' }
+          ]
+        },
+        {
           label: 'Reference',
           items: [
             { label: 'CLI Reference', slug: 'reference/cli-reference' },
