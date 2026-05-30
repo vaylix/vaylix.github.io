@@ -11,7 +11,7 @@ Vaylix is a Rust database workspace centered on a transport-first architecture:
 
 `client -> transport -> TCP/TLS -> transport -> server -> engine`
 
-The current implementation is a single-node, string-to-string key/value database with:
+The current implementation is a string-to-string key/value database with manual leader/follower replication and:
 
 - a custom framed binary protocol v2 with startup capability negotiation
 - a shared transport crate used by both client and server
@@ -19,6 +19,7 @@ The current implementation is a single-node, string-to-string key/value database
 - authenticated client connections with in-server RBAC
 - optional TLS and mTLS client/server transport
 - segmented encrypted-at-rest WAL and encrypted snapshots
+- WAL-based leader/follower replication with snapshot bootstrap, WAL catch-up, and explicit write-ack modes
 - offline PITR-oriented storage inspection, migration, verification, and restore subcommands
 - append-only audit logging
 - default-on negotiated outbound frame-level zstd compression
@@ -60,7 +61,7 @@ Not yet true:
 - MVCC
 - distributed transactions
 - formal isolation levels
-- replication-aware commit coordination
+- quorum-based HA or automatic failover
 
 Do not describe the current implementation as full ACID.
 
@@ -81,8 +82,8 @@ Current negotiated capabilities:
 - `pipelining`
 - `trace_context`
 
-`0.2.x` and `0.3.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
-Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed result payload. `0.2.x` clients are therefore not transaction-wire-compatible with `0.3.0` servers.
+`0.2.x`, `0.3.x`, and `0.4.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed result payload. `0.2.x` clients are therefore not transaction-wire-compatible with `0.3.0+` servers.
 
 ## TLS
 
@@ -217,6 +218,8 @@ Current sections:
 - `transport.*`
 - `storage.*`
 - `persistence.*`
+- `replication.*`
+- `health.*`
 - `security.*`
 - `runtime.*`
 - `metrics.*`
@@ -238,7 +241,7 @@ Current server runtime settings are also exposed through `VAYLIX_*` environment 
 
 ## Current Gaps
 
-- no replication
+- no automatic failover or quorum-based HA
 - no sharding
 - no distributed ACID semantics
 - no MVCC

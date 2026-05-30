@@ -16,7 +16,7 @@ The SDK is:
 - direct TCP/TLS transport, not a wrapper around the Rust CLI
 - zstd compression via a native Node binding with prebuilt binaries
 - factory-led public API with `createClient()` and `createPool()`
-- aligned with the current VTP2 transport and the structured `EXEC` result payload introduced with server `0.3.0`
+- aligned with the current VTP2 transport, structured `EXEC` results from server `0.3.0`, and the replication/health command surface introduced in server `0.4.0`
 
 ## Install
 
@@ -97,6 +97,33 @@ try {
 }
 ```
 
+## Health and Replication
+
+The SDK now exposes the `0.4.0` operational inspection surface directly:
+
+```ts
+const health = await client.health();
+const replication = await client.showReplication();
+```
+
+These commands return deterministic `Record<string, string>` maps so application code can reason about:
+
+- readiness and maintenance state
+- replication role
+- acknowledgement mode
+- follower phase and lag
+- leader identity and local applied sequence
+
+The SDK also exposes leader-only operational commands:
+
+```ts
+await client.promoteFollower();
+await client.pauseReplication();
+await client.resumeReplication();
+```
+
+Those are for controlled administrative workflows. They are not ordinary application commands.
+
 ## Transactions
 
 Transactions are explicit:
@@ -132,6 +159,10 @@ The SDK exports typed errors such as:
 - `ProtocolError`
 - `AuthenticationError`
 - `AuthorizationError`
+- `ReplicationAckTimeoutError`
+- `ReplicationAckUnavailableError`
+- `FollowerWriteRejectedError`
+- `ReplicationPromotionDeniedError`
 - `RemoteCommandError`
 
 Use these to distinguish transport failures from server-side command failures.
@@ -147,9 +178,12 @@ The current SDK surface covers:
 - `mget`, `mset`
 - `expire`, `ttl`, `persist`
 - `info`
+- `health`
+- `showReplication`
+- `promoteFollower`, `pauseReplication`, `resumeReplication`
 - `metrics`
 - `metricsProm`
 - transactions
 - simple pooling
 
-It is intentionally not a full admin/operator SDK yet.
+It is still intentionally narrower than the full Rust CLI, but it now covers the core application-facing and replication-aware operational surface shipped in `0.4.0`.

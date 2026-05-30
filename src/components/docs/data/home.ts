@@ -61,17 +61,17 @@ export const homeSections = [
 ];
 
 export const currentState = [
-  'Single-node Rust key/value engine with a string-to-string model',
+  'Rust key/value engine with a string-to-string model and manual leader/follower replication',
   'Transport v2 with required startup negotiation and UUID request IDs',
-  'Tokio multi-client server with auth, RBAC, maintenance mode, and default-on compression',
+  'Tokio multi-client server with auth, RBAC, maintenance mode, default-on compression, and explicit write-ack modes',
   'Segmented encrypted WAL plus encrypted snapshots, storage keyring management, and offline PITR-oriented restore',
   'OTel-aligned metrics with Prometheus text export over the database protocol',
   'Official TypeScript SDK for Node.js applications via @vaylix/client',
 ];
 
 export const boundaries = [
-  'Replication and sharding are roadmap items, not current features',
-  'Transactions are atomic on one node, not MVCC or distributed ACID',
+  'Replication exists with manual promotion; automatic failover and quorum HA do not',
+  'Transactions are atomic on one leader, not MVCC or distributed ACID',
   'TLS and mTLS are available but still opt-in at deployment time',
   'The docs must track the current implementation, not aspirational behavior',
 ];

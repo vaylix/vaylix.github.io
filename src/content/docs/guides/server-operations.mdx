@@ -22,6 +22,11 @@ description: Configure runtime limits, TLS, persistence, audit logging, maintena
 | `--expiration-sweep-interval-seconds` | Background TTL sweeper |
 | `--idle-timeout-seconds` | Disconnect idle clients |
 | `--audit-log-path` | Override audit log location |
+| `--replication-role` | `standalone`, `leader`, or `follower` |
+| `--replication-node-id` / `--replication-group-id` | Replication identity |
+| `--replication-bind` / `--replication-advertise` | Replication listener and advertised address |
+| `--replication-upstream` | Follower upstream leader address |
+| `--replication-write-ack` | `local`, `replica`, or `all` |
 
 ## Default Runtime Behavior
 
@@ -76,6 +81,32 @@ maintenance off
 ```
 
 When enabled, the node keeps read and inspection paths available while rejecting mutating writes, restore flows, and transaction entry/commit.
+
+## Replication Operations
+
+`0.4.0` adds manual leader/follower replication and explicit write-ack semantics.
+
+Operational inspection commands:
+
+```text
+health
+show replication
+```
+
+Administrative controls:
+
+```text
+promote follower
+pause replication
+resume replication
+```
+
+Current scope:
+
+- manual failover only
+- no automatic election
+- no quorum-based HA
+- followers may serve stale reads
 
 ## WAL and Snapshot Behavior
 

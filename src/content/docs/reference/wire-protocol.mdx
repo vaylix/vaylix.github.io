@@ -18,7 +18,7 @@ Current protocol:
 - magic: `VTP2`
 - version: `2`
 
-`0.2.x` and `0.3.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+`0.2.x`, `0.3.x`, and `0.4.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
 
 Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed payload. `0.2.x` transaction clients that assume `EXEC` decodes as `Response::strings(...)` are not wire-compatible with `0.3.0` servers for transaction result decoding.
 
@@ -162,6 +162,8 @@ Current wire opcodes cover:
 - info and metrics
 - logical backup/restore
 - maintenance mode
+- health and replication inspection
+- manual replication promotion/pause/resume controls
 - user/role/permission management
 - transaction controls
 
