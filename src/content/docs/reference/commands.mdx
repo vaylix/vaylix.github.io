@@ -362,6 +362,51 @@ While maintenance mode is enabled:
 - reads, `info`, `metrics`, `metrics prom`, backup verification flows, `show *`, `whoami`, and `maintenance status` remain available
 - mutating writes, restore flows, and transaction commands are rejected
 
+## HA and Replication
+
+### `HEALTH`
+
+```text
+health
+```
+
+Returns machine-readable readiness and role state as key/value fields.
+
+### `SHOW CLUSTER`
+
+```text
+show cluster
+```
+
+Returns cluster state such as local role, term, leader ID, quorum size, member count, sync policy, commit sequence, and local applied sequence.
+
+### `SHOW REPLICATION`
+
+```text
+show replication
+```
+
+Returns replication diagnostics such as role, node ID, group ID, leader hint, commit sequence, retention floor, paused state, and health reason.
+
+### `CLUSTER JOIN` and `CLUSTER REMOVE`
+
+```text
+cluster join <node-id> <host:port>
+cluster remove <node-id>
+```
+
+Updates cluster membership from the leader. The `<node-id>` must be stable across restarts, and `<host:port>` must be reachable by peer replication traffic.
+
+### Replication Controls
+
+```text
+promote follower
+pause replication
+resume replication
+```
+
+These are administrative controls for exceptional operational workflows. Normal `0.5.0` failover uses leader election; application writes should target the current leader.
+
 ## User, Role, and Grant Management
 
 These commands are server-side administrative commands. The engine remains unaware of users and roles.

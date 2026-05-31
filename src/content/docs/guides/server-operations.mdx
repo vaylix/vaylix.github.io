@@ -23,10 +23,11 @@ description: Configure runtime limits, TLS, persistence, audit logging, maintena
 | `--idle-timeout-seconds` | Disconnect idle clients |
 | `--audit-log-path` | Override audit log location |
 | `--replication-role` | `standalone`, `leader`, or `follower` |
-| `--replication-node-id` / `--replication-group-id` | Replication identity |
-| `--replication-bind` / `--replication-advertise` | Replication listener and advertised address |
-| `--replication-upstream` | Follower upstream leader address |
-| `--replication-write-ack` | `local`, `replica`, or `all` |
+| `--node-id` / `--replication-group-id` | Stable node and cluster identity |
+| `--replication-advertise-addr` | Address this node advertises to peers |
+| `--replication-upstream` | Initial upstream source for follower catch-up |
+| `--write-ack-mode` | `replica` / `majority` by default; `local` and `all` are explicit alternatives |
+| `--cluster-peers` | Static peers in `node_id@host:port` form |
 
 ## Default Runtime Behavior
 
@@ -82,20 +83,23 @@ maintenance off
 
 When enabled, the node keeps read and inspection paths available while rejecting mutating writes, restore flows, and transaction entry/commit.
 
-## Replication Operations
+## HA and Replication Operations
 
-`0.4.0` adds manual leader/follower replication and explicit write-ack semantics.
+`0.5.0` adds automatic leader election, quorum-backed write acknowledgement, and cluster membership inspection. The recommended HA topology is three voting nodes with stable node IDs and peer addresses.
 
 Operational inspection commands:
 
 ```text
 health
+show cluster
 show replication
 ```
 
 Administrative controls:
 
 ```text
+cluster join <node-id> <host:port>
+cluster remove <node-id>
 promote follower
 pause replication
 resume replication
@@ -103,10 +107,11 @@ resume replication
 
 Current scope:
 
-- manual failover only
-- no automatic election
-- no quorum-based HA
+- automatic election and majority quorum writes are supported
+- `replica` and `majority` are equivalent write acknowledgement modes
+- `local` writes are explicitly weaker and not HA-safe
 - followers may serve stale reads
+- linearizable follower reads, sharding, MVCC, and distributed transactions are not implemented
 
 ## WAL and Snapshot Behavior
 

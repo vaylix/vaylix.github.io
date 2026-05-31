@@ -8,6 +8,13 @@ import {
   LuSquareTerminal,
   LuWorkflow,
 } from 'react-icons/lu';
+import {
+  latestDockerPassword,
+  latestDockerUser,
+  latestSdkVersion,
+  latestServerImage,
+  latestServerVersion,
+} from './versions';
 
 export const homeSections = [
   {
@@ -61,32 +68,33 @@ export const homeSections = [
 ];
 
 export const currentState = [
-  'Rust key/value engine with a string-to-string model and manual leader/follower replication',
+  'Rust key/value engine with a string-to-string model and HA-aware leader/follower replication',
   'Transport v2 with required startup negotiation and UUID request IDs',
-  'Tokio multi-client server with auth, RBAC, maintenance mode, default-on compression, and explicit write-ack modes',
+  'Tokio multi-client server with auth, RBAC, maintenance mode, default-on compression, and quorum-backed writes by default',
   'Segmented encrypted WAL plus encrypted snapshots, storage keyring management, and offline PITR-oriented restore',
   'OTel-aligned metrics with Prometheus text export over the database protocol',
-  'Official TypeScript SDK for Node.js applications via @vaylix/client',
+  `Official TypeScript SDK for Node.js applications via @vaylix/client ${latestSdkVersion}`,
+  `Latest server release line: ${latestServerVersion}`,
 ];
 
 export const boundaries = [
-  'Replication exists with manual promotion; automatic failover and quorum HA do not',
+  'HA is single-region primary/replica; sharding and distributed ACID are not implemented',
   'Transactions are atomic on one leader, not MVCC or distributed ACID',
   'TLS and mTLS are available but still opt-in at deployment time',
   'The docs must track the current implementation, not aspirational behavior',
 ];
 
-export const quickStart = `docker pull ghcr.io/vaylix/vaylix:latest
+export const quickStart = `docker pull ${latestServerImage}
 
 docker run --rm \\
   -p 9173:9173 \\
   -v vaylix-data:/var/lib/vaylix \\
-  -e VAYLIX_USER=vaylix \\
-  -e VAYLIX_PASSWORD=vaylix \\
-  ghcr.io/vaylix/vaylix:latest
+  -e VAYLIX_USER=${latestDockerUser} \\
+  -e VAYLIX_PASSWORD=${latestDockerPassword} \\
+  ${latestServerImage}
 
 ./vaylix-client \\
-  --url 'vaylix://vaylix:vaylix@127.0.0.1:9173?output=table'
+  --url 'vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173?output=table'
 
 vaylix> ping
 PONG

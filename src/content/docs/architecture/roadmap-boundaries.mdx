@@ -5,12 +5,12 @@ description: What is implemented today, what is explicitly not, and why the docs
 
 ## Implemented Today
 
-- primary/replica key/value database with manual promotion
+- single-region primary/replica key/value database with automatic leader election
 - framed binary transport
 - optional TLS and mTLS
 - authentication enabled by default with an explicit local/trusted disable flag
 - encrypted snapshot + WAL durability
-- WAL-based replication with snapshot bootstrap and explicit write-ack modes
+- WAL-based replication with snapshot bootstrap and quorum-backed write acknowledgement by default
 - audit log
 - zstd frame compression enabled by default with an explicit disable flag
 - atomic single-node `EXEC`
@@ -19,8 +19,6 @@ description: What is implemented today, what is explicitly not, and why the docs
 
 ## Not Implemented Today
 
-- automatic failover
-- quorum-based HA
 - sharding
 - distributed transactions
 - MVCC

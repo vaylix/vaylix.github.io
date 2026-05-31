@@ -18,7 +18,7 @@ Current protocol:
 - magic: `VTP2`
 - version: `2`
 
-`0.2.x`, `0.3.x`, and `0.4.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+`0.2.x`, `0.3.x`, `0.4.x`, and `0.5.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
 
 Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed payload. `0.2.x` transaction clients that assume `EXEC` decodes as `Response::strings(...)` are not wire-compatible with `0.3.0` servers for transaction result decoding.
 
@@ -162,11 +162,29 @@ Current wire opcodes cover:
 - info and metrics
 - logical backup/restore
 - maintenance mode
-- health and replication inspection
-- manual replication promotion/pause/resume controls
+- health, cluster, and replication inspection
+- cluster membership controls
+- replication promotion/pause/resume controls
 - user/role/permission management
 - transaction controls
 
-The transport itself remains protocol version `2`; the `0.3.0` `EXEC` payload change is a contract refinement within VTP2, not a new protocol version.
+The transport itself remains protocol version `2`; the `0.3.0` `EXEC` payload change and the `0.5.0` HA command additions are contract extensions within VTP2, not a new protocol version.
+
+`0.5.0` cluster and replication opcodes:
+
+| Opcode | Meaning |
+| --- | --- |
+| `0x3A` | `health` |
+| `0x3B` | `show cluster` |
+| `0x3C` | `cluster join` |
+| `0x3D` | `cluster remove` |
+| `0x3E` | `show replication` |
+| `0x3F` | `promote follower` |
+| `0x40` | `pause replication` |
+| `0x41` | `resume replication` |
+| `0x46` | internal replication vote |
+| `0x47` | internal replication heartbeat |
+| `0x48` | internal replication append |
+| `0x49` | internal replication snapshot install |
 
 For exact user-facing syntax, use [Command Reference](/reference/commands/).

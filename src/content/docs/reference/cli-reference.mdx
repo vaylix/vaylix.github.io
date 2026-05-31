@@ -52,6 +52,27 @@ description: Command-line flags, environment variables, and offline subcommands 
 | `--auth-failure-limit` | `VAYLIX_AUTH_FAILURE_LIMIT` | Maximum failures before lockout. |
 | `--auth-lockout-seconds` | `VAYLIX_AUTH_LOCKOUT_SECONDS` | Lockout duration after exceeding the auth failure limit. |
 
+### HA and Replication
+
+| Flag | Environment | Meaning |
+| --- | --- | --- |
+| `--replication-role` | `VAYLIX_REPLICATION_ROLE` | Node role: `standalone`, `leader`, or `follower`. |
+| `--node-id` | `VAYLIX_NODE_ID` | Stable node identifier used in cluster and replication metadata. |
+| `--replication-group-id` | `VAYLIX_REPLICATION_GROUP_ID` | Stable cluster or replication group identifier. |
+| `--replication-advertise-addr` | `VAYLIX_REPLICATION_ADVERTISE_ADDR` | Peer-reachable address advertised by this node. |
+| `--replication-upstream` | `VAYLIX_REPLICATION_UPSTREAM` | Initial upstream source used by followers for catch-up. |
+| `--replication-user` | `VAYLIX_REPLICATION_USER` | Username used by peer replication traffic. |
+| `--replication-password` | `VAYLIX_REPLICATION_PASSWORD` | Password used by peer replication traffic. |
+| `--write-ack-mode` | `VAYLIX_WRITE_ACK_MODE` | Client-visible durability mode: `local`, `replica` / `majority`, or `all`. |
+| `--replication-ack-timeout-ms` | `VAYLIX_REPLICATION_ACK_TIMEOUT_MS` | Maximum wait for quorum/follower acknowledgement. |
+| `--replication-poll-interval-ms` | `VAYLIX_REPLICATION_POLL_INTERVAL_MS` | Follower catch-up polling interval. |
+| `--replication-fetch-batch-size` | `VAYLIX_REPLICATION_FETCH_BATCH_SIZE` | Maximum WAL entries fetched per replication round trip. |
+| `--replication-stale-after-seconds` | `VAYLIX_REPLICATION_STALE_AFTER_SECONDS` | Lag threshold before follower health degrades. |
+| `--replication-heartbeat-interval-ms` | `VAYLIX_REPLICATION_HEARTBEAT_INTERVAL_MS` | Leader heartbeat interval. |
+| `--replication-election-timeout-min-ms` | `VAYLIX_REPLICATION_ELECTION_TIMEOUT_MIN_MS` | Lower bound for election timeout. |
+| `--replication-election-timeout-max-ms` | `VAYLIX_REPLICATION_ELECTION_TIMEOUT_MAX_MS` | Upper bound for election timeout. |
+| `--cluster-peers` | `VAYLIX_CLUSTER_PEERS` | Static peers in `node_id@host:port` form; repeated or comma-delimited. |
+
 ## Offline Server Subcommands
 
 ### Storage Maintenance

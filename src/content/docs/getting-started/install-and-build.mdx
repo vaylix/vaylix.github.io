@@ -60,6 +60,14 @@ Important runtime variables:
 | `VAYLIX_WAL_SYNC` | WAL durability mode |
 | `VAYLIX_WAL_SEGMENT_SIZE_BYTES` | Segment rotation threshold |
 | `VAYLIX_WAL_RETAIN_SEGMENTS` | Retained sealed WAL segment count |
+| `VAYLIX_REPLICATION_ROLE` | `standalone`, `leader`, or `follower` |
+| `VAYLIX_NODE_ID` | Stable node identity for HA metadata |
+| `VAYLIX_REPLICATION_GROUP_ID` | Cluster or replication group identity |
+| `VAYLIX_REPLICATION_ADVERTISE_ADDR` | Address this node advertises to peers |
+| `VAYLIX_REPLICATION_UPSTREAM` | Initial upstream source for follower catch-up |
+| `VAYLIX_REPLICATION_USER` / `VAYLIX_REPLICATION_PASSWORD` | Credentials used by replication peer traffic |
+| `VAYLIX_WRITE_ACK_MODE` | `replica` / `majority` by default; `local` and `all` are explicit alternatives |
+| `VAYLIX_CLUSTER_PEERS` | Comma-delimited peers in `node_id@host:port` form |
 | `VAYLIX_SNAPSHOT_INTERVAL_SECONDS` | Background snapshot interval |
 | `VAYLIX_EXPIRATION_SWEEP_INTERVAL_SECONDS` | Background expiration sweep interval |
 | `VAYLIX_IDLE_TIMEOUT_SECONDS` | Idle client timeout |

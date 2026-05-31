@@ -3,7 +3,7 @@ title: TypeScript SDK
 description: Using the official @vaylix/client package from Node.js applications.
 ---
 
-The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme).
+The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme). The current SDK line is `0.3.x` and is aware of Vaylix server `0.5.0`.
 
 Use it when Vaylix is part of an application codebase and you need direct transport access rather than the interactive CLI.
 
@@ -16,12 +16,18 @@ The SDK is:
 - direct TCP/TLS transport, not a wrapper around the Rust CLI
 - zstd compression via a native Node binding with prebuilt binaries
 - factory-led public API with `createClient()` and `createPool()`
-- aligned with the current VTP2 transport, structured `EXEC` results from server `0.3.0`, and the replication/health command surface introduced in server `0.4.0`
+- aligned with the current VTP2 transport, structured `EXEC` results, and the HA cluster command surface used by server `0.5.0`
 
 ## Install
 
 ```sh
 npm install @vaylix/client
+```
+
+Pin the current release explicitly when reproducibility matters:
+
+```sh
+npm install @vaylix/client@0.3.0
 ```
 
 Runtime assumptions:
@@ -97,32 +103,36 @@ try {
 }
 ```
 
-## Health and Replication
+## Health, Cluster, and Replication
 
-The SDK now exposes the `0.4.0` operational inspection surface directly:
+The SDK exposes the server `0.5.0` operational inspection surface directly:
 
 ```ts
 const health = await client.health();
+const cluster = await client.showCluster();
 const replication = await client.showReplication();
 ```
 
 These commands return deterministic `Record<string, string>` maps so application code can reason about:
 
 - readiness and maintenance state
-- replication role
-- acknowledgement mode
+- current cluster role
+- current term and leader hint
+- quorum and write acknowledgement mode
 - follower phase and lag
 - leader identity and local applied sequence
 
 The SDK also exposes leader-only operational commands:
 
 ```ts
+await client.clusterJoin('node-2', '10.0.0.12:9173');
+await client.clusterRemove('node-2');
 await client.promoteFollower();
 await client.pauseReplication();
 await client.resumeReplication();
 ```
 
-Those are for controlled administrative workflows. They are not ordinary application commands.
+Those are for controlled administrative workflows. They are not ordinary application commands. In `0.5.0`, writes on non-leaders are rejected with typed server errors, while default reads should be sent to the leader unless the application explicitly accepts stale follower reads.
 
 ## Transactions
 
@@ -179,11 +189,13 @@ The current SDK surface covers:
 - `expire`, `ttl`, `persist`
 - `info`
 - `health`
+- `showCluster`
 - `showReplication`
+- `clusterJoin`, `clusterRemove`
 - `promoteFollower`, `pauseReplication`, `resumeReplication`
 - `metrics`
 - `metricsProm`
 - transactions
 - simple pooling
 
-It is still intentionally narrower than the full Rust CLI, but it now covers the core application-facing and replication-aware operational surface shipped in `0.4.0`.
+It is still intentionally narrower than the full Rust CLI, but it now covers the core application-facing and HA-aware operational surface shipped in server `0.5.0`.
