@@ -37,24 +37,11 @@
 }
 
 @layer base {
-  :root {
-    --docs-surface-strong: color-mix(in srgb, var(--sl-color-black) 78%, var(--sl-color-accent-high) 22%);
-    --docs-surface-soft: color-mix(in srgb, var(--sl-color-black) 88%, var(--sl-color-accent-high) 12%);
-    --docs-border: color-mix(in srgb, var(--sl-color-white) 9%, transparent);
-    --docs-glow: color-mix(in srgb, var(--sl-color-accent-high) 22%, transparent);
-  }
-
   html,
   body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-  }
-
-  body {
-    background:
-      radial-gradient(circle at top, color-mix(in srgb, var(--sl-color-accent-high) 10%, transparent) 0%, transparent 28%),
-      linear-gradient(180deg, #08110f 0%, #0a1215 24%, #0b0e11 100%);
   }
 
   *,
@@ -105,106 +92,12 @@
   .sl-markdown-content :not(pre) > code {
     overflow-wrap: anywhere;
   }
-
-  ::selection {
-    background: color-mix(in srgb, var(--sl-color-accent-high) 34%, transparent);
-  }
 }
 
 @layer components {
-  .page > .header {
-    position: relative;
-    border-bottom: 0;
-    box-shadow:
-      0 14px 36px color-mix(in srgb, black 82%, transparent),
-      0 1px 0 color-mix(in srgb, var(--sl-color-white) 6%, transparent);
-  }
-
-  .page > .header::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 -0.85rem 0;
-    height: 1.4rem;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--sl-color-accent-high) 14%, transparent) 0%,
-      transparent 100%
-    );
-    filter: blur(18px);
-    pointer-events: none;
-    opacity: 0.75;
-  }
-
-  .content-panel {
-    position: relative;
-  }
-
-  .sl-container > :where(h1, .sl-markdown-content > h2, .sl-markdown-content > h3) {
-    letter-spacing: -0.02em;
-  }
-
-  .sl-markdown-content :where(h2, h3):not(:where(.not-content *)) {
-    scroll-margin-top: calc(var(--sl-nav-height) + 1.5rem);
-  }
-
-  .sl-markdown-content :where(h2):not(:where(.not-content *)) {
-    border-bottom: 1px solid color-mix(in srgb, var(--sl-color-accent-high) 14%, transparent);
-    padding-bottom: 0.45rem;
-  }
-
-  .sidebar-pane,
-  .right-sidebar-panel {
-    background: color-mix(in srgb, var(--docs-surface-soft) 94%, transparent);
-    backdrop-filter: blur(16px);
-  }
-
-  .sidebar-pane {
-    border-inline-end: 1px solid var(--docs-border);
-  }
-
-  .right-sidebar-panel {
-    border-inline-start: 1px solid var(--docs-border);
-  }
-
-  .sl-markdown-content :where(table) {
-    border: 1px solid var(--docs-border);
-    border-radius: 0.9rem;
-    background: color-mix(in srgb, var(--docs-surface-soft) 92%, transparent);
-  }
-
-  .sl-markdown-content :where(th, td) {
-    border-color: color-mix(in srgb, var(--sl-color-white) 7%, transparent);
-  }
-
-  .sl-markdown-content :where(blockquote) {
-    border-inline-start-color: color-mix(in srgb, var(--sl-color-accent-high) 48%, transparent);
-    background: color-mix(in srgb, var(--docs-surface-soft) 94%, transparent);
-    border-radius: 0 0.9rem 0.9rem 0;
-    padding-block: 0.9rem;
-  }
-
-  .sl-markdown-content :where(pre, .expressive-code) {
-    border: 1px solid var(--docs-border);
-    border-radius: 1rem;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sl-color-white) 4%, transparent);
-  }
-
-  .sl-markdown-content a,
-  .not-prose a:not([class*='rounded-']) {
-    transition: color 140ms ease;
-  }
-
-  .sl-markdown-content a:hover,
-  .not-prose a:not([class*='rounded-']):hover {
-    color: color-mix(in srgb, var(--sl-color-accent-high) 88%, white 12%);
-  }
-
   .pagination-links a {
     font-size: var(--sl-text-sm);
     line-height: 1.5;
-    border-radius: 1rem;
-    background: color-mix(in srgb, var(--docs-surface-soft) 90%, transparent);
-    border: 1px solid var(--docs-border);
   }
 
   .pagination-links .link-title {

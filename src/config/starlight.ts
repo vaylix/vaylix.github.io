@@ -1,6 +1,6 @@
-import { githubHref, siteDescription, siteTitle } from './site';
-import { docsSidebar } from './sidebar';
 import { siteHead } from './head';
+import { docsSidebar } from './sidebar';
+import { githubHref, siteDescription, siteTitle } from './site';
 
 export const starlightConfig = {
   title: siteTitle,
