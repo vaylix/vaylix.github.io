@@ -68,7 +68,7 @@ export const homeSections = [
 ];
 
 export const currentState = [
-  'Rust key/value engine with a string-to-string model and HA-aware leader/follower replication',
+  'Rust key/value engine with a string-to-string model, leader election, and quorum-backed HA writes',
   'Transport v2 with required startup negotiation and UUID request IDs',
   'Tokio multi-client server with auth, RBAC, maintenance mode, default-on compression, and quorum-backed writes by default',
   'Segmented encrypted WAL plus encrypted snapshots, storage keyring management, and offline PITR-oriented restore',

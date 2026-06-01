@@ -3,7 +3,7 @@ title: TypeScript SDK
 description: Using the official @vaylix/client package from Node.js applications.
 ---
 
-The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme). The current SDK line is `0.3.x` and is aware of Vaylix server `0.5.0`.
+The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme). The current SDK line is `0.3.x` and is compatible with the Vaylix server `0.5.x` line, including `0.5.1`.
 
 Use it when Vaylix is part of an application codebase and you need direct transport access rather than the interactive CLI.
 
@@ -16,7 +16,7 @@ The SDK is:
 - direct TCP/TLS transport, not a wrapper around the Rust CLI
 - zstd compression via a native Node binding with prebuilt binaries
 - factory-led public API with `createClient()` and `createPool()`
-- aligned with the current VTP2 transport, structured `EXEC` results, and the HA cluster command surface used by server `0.5.0`
+- aligned with the current VTP2 transport, structured `EXEC` results, and the HA cluster command surface used by the server `0.5.x` line
 
 ## Install
 
@@ -105,7 +105,7 @@ try {
 
 ## Health, Cluster, and Replication
 
-The SDK exposes the server `0.5.0` operational inspection surface directly:
+The SDK exposes the server `0.5.x` operational inspection surface directly:
 
 ```ts
 const health = await client.health();
@@ -132,7 +132,7 @@ await client.pauseReplication();
 await client.resumeReplication();
 ```
 
-Those are for controlled administrative workflows. They are not ordinary application commands. In `0.5.0`, writes on non-leaders are rejected with typed server errors, while default reads should be sent to the leader unless the application explicitly accepts stale follower reads.
+Those are for controlled administrative workflows. They are not ordinary application commands. In the current `0.5.x` server line, writes on non-leaders are rejected with typed server errors, while default reads should be sent to the leader unless the application explicitly accepts stale follower reads.
 
 ## Transactions
 
@@ -198,4 +198,4 @@ The current SDK surface covers:
 - transactions
 - simple pooling
 
-It is still intentionally narrower than the full Rust CLI, but it now covers the core application-facing and HA-aware operational surface shipped in server `0.5.0`.
+It is still intentionally narrower than the full Rust CLI, but it covers the core application-facing and HA-aware operational surface shipped in the current `0.5.x` server line.

@@ -87,6 +87,8 @@ Important runtime variables:
 | `VAYLIX_AUTH_LOCKOUT_SECONDS` | Lockout duration |
 | `VAYLIX_TRANSACTION_MAX_SECONDS` | Maximum transaction lifetime |
 
+As of `0.5.1`, persisted Docker volumes track the env-managed bootstrap admin correctly across restarts. If you change `VAYLIX_USER` or `VAYLIX_PASSWORD` for an existing data directory and restart the container, the startup admin rotates to the new env-managed identity without dropping custom users or RBAC roles.
+
 ## Build from Source Only When Needed
 
 If you need local development, unreleased behavior, or a custom binary build, use
