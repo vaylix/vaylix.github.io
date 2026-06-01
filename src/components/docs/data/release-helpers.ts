@@ -67,6 +67,14 @@ function releaseAssets(version: string): ReleaseAsset[] {
       icon: 'windows',
     },
     {
+      label: 'Windows',
+      target: 'Server',
+      arch: 'aarch64',
+      format: '.zip',
+      href: assetHref(version, 'server', 'windows-aarch64.zip'),
+      icon: 'windows',
+    },
+    {
       label: 'Linux',
       target: 'Client',
       arch: 'x86_64',
@@ -96,6 +104,14 @@ function releaseAssets(version: string): ReleaseAsset[] {
       arch: 'x86_64',
       format: '.zip',
       href: assetHref(version, 'client', 'windows-x86_64.zip'),
+      icon: 'windows',
+    },
+    {
+      label: 'Windows',
+      target: 'Client',
+      arch: 'aarch64',
+      format: '.zip',
+      href: assetHref(version, 'client', 'windows-aarch64.zip'),
       icon: 'windows',
     },
   ];
