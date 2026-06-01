@@ -1,4 +1,5 @@
 import { unified } from '@astrojs/markdown-remark';
+import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import starlight from '@astrojs/starlight';
 import tailwindcss from '@tailwindcss/vite';
@@ -17,5 +18,14 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   site: siteUrl,
-  integrations: [react(), starlight(starlightConfig)],
+  integrations: [
+    react(),
+    starlight(starlightConfig),
+    mdx({
+      optimize: true,
+      processor: unified({
+        remarkPlugins: [remarkGfm],
+      }),
+    }),
+  ],
 });
