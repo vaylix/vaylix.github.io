@@ -3,6 +3,9 @@ import { createReleaseEntry, type ReleaseEntry } from './release-helpers';
 export type { ReleaseAsset, ReleaseEntry } from './release-helpers';
 
 export const releases: ReleaseEntry[] = [
+  createReleaseEntry({ version: '0.7.0', date: '2026-06-03' }),
+  createReleaseEntry({ version: '0.6.0', date: '2026-06-03' }),
+  createReleaseEntry({ version: '0.5.3', date: '2026-06-02' }),
   createReleaseEntry({ version: '0.5.2', date: '2026-06-01' }),
   createReleaseEntry({ version: '0.5.1', date: '2026-06-01' }),
   createReleaseEntry({ version: '0.5.0', date: '2026-05-31' }),
