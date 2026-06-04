@@ -18,9 +18,16 @@ Current protocol:
 - magic: `VTP2`
 - version: `2`
 
-`0.2.x`, `0.3.x`, `0.4.x`, and `0.5.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+`0.2.x+` intentionally rejects pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
 
 Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed payload. `0.2.x` transaction clients that assume `EXEC` decodes as `Response::strings(...)` are not wire-compatible with `0.3.0` servers for transaction result decoding.
+
+`0.8.0` keeps protocol version `2` but hardens value semantics and request
+encoding:
+
+- value-bearing request fields are binary-safe length-prefixed byte payloads
+- value-bearing response fields are binary-safe length-prefixed byte payloads
+- `SET` now carries an optional `if_version: u64` tail for version-based CAS
 
 ## Startup Negotiation
 
@@ -84,7 +91,10 @@ Responses contain:
 - status
 - response payload
 
-Most responses use the same payload families as `0.2.x`, but successful `EXEC` responses now use a dedicated typed result payload rather than flattened strings.
+Most responses use the same payload families as `0.2.x`, but successful `EXEC`
+responses now use a dedicated typed result payload rather than flattened
+strings. In `0.8.0`, value-bearing payloads are opaque bytes rather than
+implicitly UTF-8 strings.
 
 ## Request IDs and Pipelining
 
@@ -102,6 +112,7 @@ Current outbound compression behavior:
 - compression is selected during startup negotiation
 - `--disable-compression` disables outbound compression on that process
 - URL query `compression=none|zstd` configures the client
+- large async zstd compression and decompression are offloaded away from network hot paths
 
 Compression is frame-level, not payload-field-level. The checksum covers the compressed bytes that were actually transmitted.
 
@@ -140,22 +151,24 @@ Current result kinds:
 | --- | --- |
 | `0x00` | `ok` |
 | `0x01` | `not_found` |
-| `0x02` | string value |
+| `0x02` | byte value |
 | `0x03` | boolean |
 | `0x04` | count (`u64`) |
 | `0x05` | integer (`i64`) |
-| `0x06` | entry list |
-| `0x07` | string list |
+| `0x06` | entry list with byte values |
+| `0x07` | optional byte value list |
 | `0x08` | scan payload |
 
-This fixes the old transaction result ambiguity where values like `"true"`, `"42"`, or `"NOT_FOUND"` could not be reliably distinguished from real string data after stringification.
+This fixes the old transaction result ambiguity where values like `"true"`,
+`"42"`, or `"NOT_FOUND"` could not be reliably distinguished from real string
+data after stringification, and in `0.8.0` it preserves exact byte payloads.
 
 ## Current Opcode Surface
 
 Current wire opcodes cover:
 
 - auth and ping
-- string reads and writes
+- binary-safe key/value reads and writes
 - numeric operations
 - TTL commands
 - rename and scan
@@ -168,7 +181,10 @@ Current wire opcodes cover:
 - user/role/permission management
 - transaction controls
 
-The transport itself remains protocol version `2`; the `0.3.0` `EXEC` payload change and the `0.5.0` HA command additions are contract extensions within VTP2, not a new protocol version.
+The transport itself remains protocol version `2`; the `0.3.0` `EXEC` payload
+change, the `0.5.0` HA command additions, and the `0.8.0` binary-value / CAS
+payload changes are contract extensions within VTP2, not a new protocol
+version.
 
 `0.5.0` cluster and replication opcodes:
 

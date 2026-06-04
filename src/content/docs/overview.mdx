@@ -10,7 +10,7 @@ Vaylix is a Rust key/value database built around a strict transport boundary:
 The current system is intentionally narrow and explicit:
 
 - single-region primary/replica deployment model with automatic leader election
-- string-to-string data model
+- UTF-8 string keys with opaque byte values and persisted value versions
 - VTP2 framed binary transport shared by client and server
 - authenticated access enabled by default
 - optional TLS and mTLS transport
@@ -19,6 +19,7 @@ The current system is intentionally narrow and explicit:
 - WAL-based replication with quorum-backed write acknowledgement by default
 - encrypted-at-rest persistence and audit logging
 - logical backup/restore and offline PITR-oriented storage tooling
+- version-based compare-and-set through `SET ... IF VERSION`
 
 ## What the Docs Cover
 

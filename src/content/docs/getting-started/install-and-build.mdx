@@ -75,7 +75,7 @@ Important runtime variables:
 | `VAYLIX_DISABLE_COMPRESSION` | Disable outbound frame compression |
 | `VAYLIX_MAX_REQUEST_PAYLOAD_BYTES` | Maximum post-framing request payload |
 | `VAYLIX_MAX_KEY_BYTES` | Maximum key size |
-| `VAYLIX_MAX_VALUE_BYTES` | Maximum string value size |
+| `VAYLIX_MAX_VALUE_BYTES` | Maximum value size in bytes |
 | `VAYLIX_MAX_KEYS_PER_BATCH` | Maximum key count in multi-key commands |
 | `VAYLIX_MAX_TRANSACTION_QUEUE_LEN` | Maximum queued `MULTI` commands |
 | `VAYLIX_REQUESTS_PER_SECOND` | Sustained request rate |
@@ -87,7 +87,7 @@ Important runtime variables:
 | `VAYLIX_AUTH_LOCKOUT_SECONDS` | Lockout duration |
 | `VAYLIX_TRANSACTION_MAX_SECONDS` | Maximum transaction lifetime |
 
-As of `0.5.1`, persisted Docker volumes track the env-managed bootstrap admin correctly across restarts. If you change `VAYLIX_USER` or `VAYLIX_PASSWORD` for an existing data directory and restart the container, the startup admin rotates to the new env-managed identity without dropping custom users or RBAC roles.
+As of `0.5.1+`, persisted Docker volumes track the env-managed bootstrap admin correctly across restarts. If you change `VAYLIX_USER` or `VAYLIX_PASSWORD` for an existing data directory and restart the container, the startup admin rotates to the new env-managed identity without dropping custom users or RBAC roles.
 
 ## Build from Source Only When Needed
 

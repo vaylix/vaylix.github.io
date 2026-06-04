@@ -11,7 +11,7 @@ Vaylix is a Rust database workspace centered on a transport-first architecture:
 
 `client -> transport -> TCP/TLS -> transport -> server -> engine`
 
-The current implementation is a string-to-string key/value database with single-region HA-oriented leader/follower replication and:
+The current implementation is a UTF-8-string-key, binary-value key/value database with single-region HA-oriented leader/follower replication and:
 
 - a custom framed binary protocol v2 with startup capability negotiation
 - a shared transport crate used by both client and server
@@ -28,14 +28,16 @@ The current implementation is a string-to-string key/value database with single-
 
 ## Current Data Model
 
-- user-visible model: `String -> String`
-- in-memory map: `BTreeMap<String, String>`
+- user-visible model: `String -> bytes`
+- keys: UTF-8 strings
+- values: opaque bytes
+- stored values carry a persisted `u64` version
 - expirations: per-key absolute timestamps in milliseconds
 
 Supported command families:
 
 - auth and ping
-- string reads and writes
+- binary-safe reads and writes
 - numeric operations
 - TTL commands
 - rename and scan
@@ -44,6 +46,7 @@ Supported command families:
 - maintenance mode
 - user/role/permission management
 - transaction controls
+- version-based CAS through `SET <key> <value> IF VERSION <version>`
 
 ## Transaction and ACID Status
 
@@ -82,8 +85,9 @@ Current negotiated capabilities:
 - `pipelining`
 - `trace_context`
 
-`0.2.x`, `0.3.x`, `0.4.x`, and `0.5.x` intentionally reject pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
+`0.2.x+` intentionally rejects pre-v2 frames. `0.1.0` clients and servers are not wire-compatible with `0.2.0+`.
 Within protocol v2, `0.3.0` changes successful `EXEC` responses from a lossy string list to a structured typed result payload. `0.2.x` clients are therefore not transaction-wire-compatible with `0.3.0+` servers.
+Within protocol v2, `0.8.0` makes value-bearing payloads binary-safe and adds persisted value versions plus `SET ... IF VERSION` CAS support without a protocol-version bump.
 
 ## TLS
 
@@ -183,7 +187,7 @@ Current logical backup commands:
 - `RESTORE CHECK <logical-dump-json>`
 - `RESTORE CHECK FROM <path>`
 
-Backups are JSON-based logical dumps. `backup to <path>` writes a sidecar `<path>.manifest.json` with a SHA-256 digest and dump metadata.
+Backups are JSON-based logical dumps. `0.8.0` logical backups use v2 with base64-encoded values and persisted value versions; v1 text logical backups remain restorable. `backup to <path>` writes a sidecar `<path>.manifest.json` with a SHA-256 digest and dump metadata.
 
 ## Audit Logging
 

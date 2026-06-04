@@ -1,104 +1,130 @@
 import {
-  LuBookOpen,
-  LuBoxes,
-  LuCodeXml,
-  LuFileStack,
-  LuLock,
-  LuServer,
-  LuSquareTerminal,
-  LuWorkflow,
-} from 'react-icons/lu';
-import {
   latestDockerPassword,
   latestDockerUser,
-  latestSdkVersion,
   latestServerImage,
-  latestServerVersion,
 } from './versions';
 
-export const homeSections = [
-  {
-    href: '/getting-started/install-and-build/',
-    title: 'Install and build',
-    description: 'Download the client binary, run the published server image, or jump to the isolated source-build path when you need local development.',
-    icon: LuSquareTerminal,
-  },
-  {
-    href: '/getting-started/run-local/',
-    title: 'Run a local node',
-    description: 'Start the published server image, connect with the client binary, and verify auth, compression, optional TLS/mTLS, and command flow.',
-    icon: LuServer,
-  },
-  {
-    href: '/reference/wire-protocol/',
-    title: 'Inspect the wire protocol',
-    description: 'Review VTP2, startup negotiation, frame checksums, compression flags, request IDs, and structured responses.',
-    icon: LuWorkflow,
-  },
-  {
-    href: '/reference/commands/',
-    title: 'Use the command set',
-    description: 'Check supported commands, syntax, examples, transaction boundaries, maintenance controls, backup flows, and RBAC operations.',
-    icon: LuBookOpen,
-  },
-  {
-    href: '/developer/typescript-sdk/',
-    title: 'Build with the SDK',
-    description: 'Use the official TypeScript SDK for application-side access, transactions, pooling, typed errors, and direct VTP2 communication.',
-    icon: LuCodeXml,
-  },
-  {
-    href: '/reference/persistence-and-recovery/',
-    title: 'Understand persistence',
-    description: 'Learn segmented WAL behavior, snapshots, manifests, keyring handling, backup verification, and offline PITR operations.',
-    icon: LuFileStack,
-  },
-  {
-    href: '/reference/security-model/',
-    title: 'Review the security model',
-    description: 'Default-on auth, RBAC, optional TLS/mTLS, password policy, auth lockouts, encrypted persistence, and audit logging.',
-    icon: LuLock,
-  },
-  {
-    href: '/architecture/system-design/',
-    title: 'Read the architecture',
-    description: 'See the transport-first layering, worker boundaries, maintenance mode, and the separation between protocol, runtime, and storage.',
-    icon: LuBoxes,
-  },
+export const heroProperties = [
+  'Raft-style quorum replication',
+  'Encrypted WAL and snapshot persistence',
+  'Authentication and RBAC enabled by default',
+  'Structured binary protocol (VTP2)',
+  'Deterministic error codes',
+  'Production-oriented runtime and recovery path',
 ];
 
-export const currentState = [
-  'Rust key/value engine with a string-to-string model, leader election, and quorum-backed HA writes',
-  'Transport v2 with required startup negotiation and UUID request IDs',
-  'Tokio multi-client server with auth, RBAC, maintenance mode, default-on compression, and quorum-backed writes by default',
-  'Segmented encrypted WAL plus encrypted snapshots, storage keyring management, and offline PITR-oriented restore',
-  'OTel-aligned metrics with Prometheus text export over the database protocol',
-  `Official TypeScript SDK for Node.js applications via @vaylix/client ${latestSdkVersion}`,
-  `Latest server release line: ${latestServerVersion}`,
-];
-
-export const boundaries = [
-  'HA is single-region primary/replica; sharding and distributed ACID are not implemented',
-  'Transactions are atomic on one leader, not MVCC or distributed ACID',
-  'TLS and mTLS are available but still opt-in at deployment time',
-  'The docs must track the current implementation, not aspirational behavior',
-];
-
-export const quickStart = `docker pull ${latestServerImage}
-
-docker run --rm \\
+export const heroExample = `docker run --rm \\
   -p 9173:9173 \\
   -v vaylix-data:/var/lib/vaylix \\
   -e VAYLIX_USER=${latestDockerUser} \\
   -e VAYLIX_PASSWORD=${latestDockerPassword} \\
   ${latestServerImage}
 
-./vaylix-client \\
-  --url 'vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173?output=table'
+./vaylix-client --url 'vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173'
 
-vaylix> ping
-PONG
-vaylix> set app:mode production
+vaylix> set control:epoch 42
 OK
-vaylix> metrics prom
-# HELP vaylix_server_request_count ...`;
+vaylix> get control:epoch
+42`;
+
+export const whatVaylixIs = [
+  'Transport-first architecture with the protocol surface isolated from the storage engine.',
+  'Deterministic durability through WAL-backed writes, snapshotting, startup validation, and explicit failure on corruption.',
+  'Explicit failure semantics for protocol, storage, auth, and replication paths.',
+  'Designed for operational state rather than application data modeling.',
+];
+
+export const useCases = [
+  'Configuration storage',
+  'Feature flags',
+  'Coordination metadata',
+  'Internal platform state',
+  'Distributed control planes',
+];
+
+export const whatVaylixIsNot = [
+  'Not a Redis-compatible data-structure server.',
+  'Not a document database.',
+  'Not a distributed SQL engine.',
+  'Not a caching tier.',
+];
+
+export const architectureFlow = [
+  'client',
+  'transport',
+  'server',
+  'engine',
+];
+
+export const persistenceFlow = ['replication', 'WAL', 'snapshot'];
+
+export const architectureNotes = [
+  'Transport is isolated from the engine and owns framing, negotiation, compression, and request/response encoding.',
+  'The engine is unaware of authentication and RBAC; those are enforced at the server layer.',
+  'Replication runs over the main protocol surface instead of a separate side channel.',
+];
+
+export const guarantees = [
+  'Quorum-backed write acknowledgement.',
+  'No committed entry is lost.',
+  'Encrypted persistence for WAL and snapshots.',
+  'Deterministic startup validation before accepting traffic.',
+  'Explicit failure on corruption or continuity mismatch.',
+];
+
+export const productionReadiness = [
+  {
+    label: 'TLS and mTLS support',
+    href: '/reference/security-model/',
+  },
+  {
+    label: 'Audit logging',
+    href: '/reference/security-model/',
+  },
+  {
+    label: 'Backup and restore',
+    href: '/reference/persistence-and-recovery/',
+  },
+  {
+    label: 'Chaos-tested replication',
+    href: '/guides/server-operations/',
+  },
+  {
+    label: 'Stability policy',
+    href: '/reference/stability-and-compatibility/',
+  },
+];
+
+export const gettingStartedLinks = [
+  {
+    label: 'Install and build',
+    href: '/getting-started/install-and-build/',
+  },
+  {
+    label: 'Run a local node',
+    href: '/getting-started/run-local/',
+  },
+  {
+    label: 'Command reference',
+    href: '/reference/commands/',
+  },
+];
+
+export const stabilityLinks = [
+  {
+    label: 'Storage format policy',
+    href: '/reference/stability-and-compatibility/#storage-format-policy',
+  },
+  {
+    label: 'Protocol compatibility policy',
+    href: '/reference/stability-and-compatibility/#protocol-compatibility-policy',
+  },
+  {
+    label: 'Versioning guarantees',
+    href: '/reference/stability-and-compatibility/#versioning-guarantees',
+  },
+  {
+    label: 'STABILITY.md',
+    href: '/STABILITY.md',
+  },
+];

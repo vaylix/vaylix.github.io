@@ -46,6 +46,10 @@ export const docsSidebar = [
         label: 'Persistence and Recovery',
         slug: 'reference/persistence-and-recovery',
       },
+      {
+        label: 'Stability and Compatibility',
+        slug: 'reference/stability-and-compatibility',
+      },
       { label: 'Security Model', slug: 'reference/security-model' },
       {
         label: 'Limits and Runtime Guards',

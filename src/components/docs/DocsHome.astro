@@ -1,91 +1,195 @@
 ---
-import {
-  LuArrowRight,
-  LuBookOpen,
-  LuFileStack,
-  LuGitBranch,
-} from 'react-icons/lu';
+import { Card, CardGrid, Code } from '@astrojs/starlight/components';
 import { FaGithub } from 'react-icons/fa6';
-import { boundaries, currentState, homeSections, quickStart } from './data/home';
-import DocsMap from './home/DocsMap.astro';
-import ProfilePanel from './home/ProfilePanel.astro';
-import QuickStartPanel from './home/QuickStartPanel.astro';
-import StartHerePanel from './home/StartHerePanel.astro';
-import StatusPanel from './home/StatusPanel.astro';
+import { LuArrowRight } from 'react-icons/lu';
+import {
+  architectureFlow,
+  architectureNotes,
+  gettingStartedLinks,
+  guarantees,
+  heroExample,
+  heroProperties,
+  persistenceFlow,
+  productionReadiness,
+  stabilityLinks,
+  useCases,
+  whatVaylixIs,
+  whatVaylixIsNot,
+} from './data/home';
 ---
 
 <div class="not-prose max-w-full space-y-8 overflow-x-clip">
-  <section
-    aria-labelledby="home-heading"
-    class="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-2xl shadow-black/20 ring-1 ring-emerald-500/10 backdrop-blur"
-  >
-    <div class="grid max-w-full gap-8 px-5 py-7 sm:px-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)] lg:px-10 lg:py-10">
-      <div class="min-w-0 space-y-6">
-        <div class="flex max-w-full flex-wrap items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-zinc-400 sm:tracking-[0.22em]">
-          <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
-            Vaylix Docs
-          </span>
-          <span>HA key/value database</span>
-          <span aria-hidden="true" class="text-zinc-600">/</span>
-          <span>Docs-first reference</span>
+  <section class="rounded-2xl border border-white/10 bg-zinc-950/80 p-6 ring-1 ring-white/5 sm:p-8">
+    <div class="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]">
+      <div class="space-y-5">
+        <div class="text-[0.72rem] font-medium uppercase tracking-[0.22em] text-zinc-500">
+          Vaylix
         </div>
-
-        <div class="space-y-4">
-          <h1 id="home-heading" class="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-            Technical documentation for running, integrating, and maintaining Vaylix.
+        <div class="space-y-3">
+          <h1 class="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            A secure, consensus-backed key-value database for operational state.
           </h1>
-          <p class="max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
-            Vaylix is a Rust key/value database with a shared transport layer, a Tokio multi-client
-            server, quorum-backed HA behavior, segmented encrypted persistence, and default-on
-            authentication. This site is the implementation-focused reference for running and
-            integrating the current release line.
+          <p class="max-w-3xl text-base leading-7 text-zinc-300">
+            Technical documentation for operators and integrators working with the current Vaylix
+            release line.
           </p>
         </div>
-
-        <nav aria-label="Primary documentation entry points" class="flex flex-wrap gap-3">
+        <ul class="grid gap-2 text-sm leading-6 text-zinc-300 sm:grid-cols-2">
+          {heroProperties.map((item) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <nav aria-label="Primary entry points" class="flex flex-wrap gap-3">
           <a
             href="/getting-started/install-and-build/"
-            class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
           >
-            Get started
+            Getting started
             <LuArrowRight className="size-4" aria-hidden="true" />
           </a>
           <a
             href="/reference/commands/"
-            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-emerald-400/30 hover:bg-zinc-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-emerald-400/30"
           >
-            Browse commands
-            <LuBookOpen className="size-4" aria-hidden="true" />
+            Command reference
           </a>
           <a
-            href="https://github.com/vaylix/vaylix"
-            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-zinc-300 transition hover:border-emerald-400/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            href="https://github.com/vaylix/vaylix/releases/tag/v0.8.0"
             target="_blank"
             rel="noreferrer"
-            aria-label="Open the Vaylix GitHub repository"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-300 transition hover:border-emerald-400/30 hover:text-white"
           >
             <FaGithub className="size-4" aria-hidden="true" />
-            GitHub
+            Release v0.8.0
           </a>
         </nav>
       </div>
 
-      <ProfilePanel />
+      <div class="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <h2 class="mb-4 text-sm font-semibold text-zinc-100">Minimal example</h2>
+        <div class="overflow-x-auto rounded-xl border border-white/10 bg-black/50">
+          <Code code={heroExample} lang="bash" />
+        </div>
+      </div>
     </div>
   </section>
 
-  <section
-    aria-labelledby="quickstart-heading"
-    class="flex max-w-full flex-col gap-6 xl:flex-row xl:items-stretch"
-  >
-    <QuickStartPanel code={quickStart} />
-    <StartHerePanel />
+  <section>
+    <CardGrid>
+      <Card title="What Vaylix Is">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {whatVaylixIs.map((item) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <div class="mt-5 border-t border-white/10 pt-5">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">Use cases</h3>
+          <ul class="space-y-2 text-sm text-zinc-300">
+            {useCases.map((item) => (
+              <li class="flex gap-3">
+                <span class="mt-2 size-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true"></span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+
+      <Card title="What Vaylix Is Not">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {whatVaylixIsNot.map((item) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true"></span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </CardGrid>
   </section>
 
-  <DocsMap sections={homeSections} />
+  <section class="rounded-2xl border border-white/10 bg-zinc-950/75 p-6 ring-1 ring-white/5">
+    <h2 class="mb-4 text-lg font-semibold text-white">Architecture Overview</h2>
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div class="space-y-4">
+        <div class="rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-sm text-zinc-200">
+          <div>{architectureFlow.join(' → ')}</div>
+          <div class="mt-2 text-zinc-500">{persistenceFlow.join(' → ')}</div>
+        </div>
+      </div>
+      <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+        {architectureNotes.map((item) => (
+          <li class="flex gap-3">
+            <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
 
-  <section aria-labelledby="status-heading" class="flex max-w-full flex-col gap-6 xl:flex-row xl:items-stretch">
-    <StatusPanel id="status-heading" title="Current implementation" icon={LuFileStack} items={currentState} />
-    <StatusPanel title="Boundaries to keep in mind" icon={LuGitBranch} items={boundaries} tone="zinc" />
+  <section>
+    <CardGrid>
+      <Card title="Guarantees">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {guarantees.map((item) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      <Card title="Production Readiness">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {productionReadiness.map((item) => (
+            <li>
+              <a class="text-zinc-100 hover:text-emerald-300" href={item.href}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </CardGrid>
+  </section>
+
+  <section>
+    <CardGrid>
+      <Card title="Getting Started">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {gettingStartedLinks.map((item) => (
+            <li>
+              <a class="text-zinc-100 hover:text-emerald-300" href={item.href}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p class="mt-5 text-sm text-zinc-500">
+          The full documentation set covers runtime flags, protocol behavior, persistence, security,
+          and HA operations.
+        </p>
+      </Card>
+
+      <Card title="Stability and Compatibility">
+        <ul class="space-y-3 text-sm leading-6 text-zinc-300">
+          {stabilityLinks.map((item) => (
+            <li>
+              <a class="text-zinc-100 hover:text-emerald-300" href={item.href}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </CardGrid>
   </section>
 </div>

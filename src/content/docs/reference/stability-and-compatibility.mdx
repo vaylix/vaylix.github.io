@@ -1,0 +1,27 @@
+---
+title: Stability and Compatibility
+description: Stability, compatibility, and versioning policy for Vaylix.
+---
+
+Vaylix documents compatibility explicitly. The intent is to keep operational expectations narrow and testable.
+
+## Storage Format Policy
+
+- WAL, snapshot, manifest, and backup behavior are treated as durability-critical interfaces.
+- Storage format changes must be called out explicitly in release notes.
+- On-disk corruption, continuity mismatch, or manifest mismatch must fail closed rather than partially recover.
+- Backward restore support, when present, is documented per release line rather than implied indefinitely.
+
+## Protocol Compatibility Policy
+
+- VTP is versioned explicitly.
+- Startup negotiation is the protocol boundary for compatibility decisions.
+- Request and response shape changes must either remain compatible within the negotiated version or require an explicit protocol-version change.
+- Cluster-internal compatibility assumptions must be documented when mixed-version operation is not supported.
+
+## Versioning Guarantees
+
+- Release notes are the source of truth for compatibility-impacting behavior.
+- New operational guarantees must be documented before they are claimed on the landing page or in reference docs.
+- Non-goals remain part of the compatibility contract; unsupported behavior is not treated as soft support.
+- Experimental or evolving areas should be described narrowly and without forward-compatibility claims unless those guarantees are already implemented.

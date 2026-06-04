@@ -1,19 +1,12 @@
-import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import starlight from '@astrojs/starlight';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
-import remarkGfm from 'remark-gfm';
 import { siteUrl } from './src/config/site';
 import { starlightConfig } from './src/config/starlight';
 
 export default defineConfig({
-  markdown: {
-    processor: unified({
-      remarkPlugins: [remarkGfm],
-    }),
-  },
   vite: {
     plugins: [tailwindcss()],
   },
@@ -23,9 +16,6 @@ export default defineConfig({
     starlight(starlightConfig),
     mdx({
       optimize: true,
-      processor: unified({
-        remarkPlugins: [remarkGfm],
-      }),
     }),
   ],
 });

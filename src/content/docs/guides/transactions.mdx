@@ -33,7 +33,7 @@ That matters for programmatic clients and SDKs:
 - booleans remain booleans
 - counts remain counts
 - integers remain integers
-- string values remain distinguishable from `NOT_FOUND` and other rendered sentinel text
+- value payloads remain distinguishable from `NOT_FOUND` and other rendered sentinel text
 
 This is a transaction-wire breaking change for `0.2.x` clients that decoded `EXEC` as a simple string array.
 

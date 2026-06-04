@@ -55,7 +55,7 @@ docker run --rm \
   ghcr.io/vaylix/vaylix:latest
 ```
 
-For persisted Docker deployments, `0.5.1` fixes bootstrap credential reconciliation. Restarting against an existing volume with new `VAYLIX_USER` or `VAYLIX_PASSWORD` values now rotates the env-managed startup admin correctly instead of leaving the old bootstrap credential active.
+For persisted Docker deployments, `0.5.1+` correctly reconciles bootstrap credentials. Restarting against an existing volume with new `VAYLIX_USER` or `VAYLIX_PASSWORD` values rotates the env-managed startup admin correctly instead of leaving the old bootstrap credential active.
 
 Require mTLS by adding a client CA bundle:
 
@@ -87,7 +87,7 @@ When enabled, the node keeps read and inspection paths available while rejecting
 
 ## HA and Replication Operations
 
-The `0.5.x` line adds automatic leader election, quorum-backed write acknowledgement, and cluster membership inspection. The recommended HA topology is three voting nodes with stable node IDs and peer addresses.
+The current `0.8.x` line includes automatic leader election, quorum-backed write acknowledgement, and cluster membership inspection. The recommended HA topology is three voting nodes with stable node IDs and peer addresses.
 
 Operational inspection commands:
 

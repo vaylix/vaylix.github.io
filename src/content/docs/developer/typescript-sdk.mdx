@@ -3,7 +3,7 @@ title: TypeScript SDK
 description: Using the official @vaylix/client package from Node.js applications.
 ---
 
-The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme). The current SDK line is `0.3.x` and is compatible with the Vaylix server `0.5.x` line, including `0.5.1`.
+The official TypeScript SDK is published as [`@vaylix/client`](https://www.npmjs.com/package/@vaylix/client?activeTab=readme). The current SDK line is `0.4.x` and is compatible with the Vaylix server `0.8.x` line.
 
 Use it when Vaylix is part of an application codebase and you need direct transport access rather than the interactive CLI.
 
@@ -16,7 +16,7 @@ The SDK is:
 - direct TCP/TLS transport, not a wrapper around the Rust CLI
 - zstd compression via a native Node binding with prebuilt binaries
 - factory-led public API with `createClient()` and `createPool()`
-- aligned with the current VTP2 transport, structured `EXEC` results, and the HA cluster command surface used by the server `0.5.x` line
+- aligned with the current VTP2 transport, structured `EXEC` results, binary-safe values, version-based CAS, and the HA cluster command surface used by the server `0.8.x` line
 
 ## Install
 
@@ -27,7 +27,7 @@ npm install @vaylix/client
 Pin the current release explicitly when reproducibility matters:
 
 ```sh
-npm install @vaylix/client@0.3.0
+npm install @vaylix/client@0.4.0
 ```
 
 Runtime assumptions:
@@ -71,6 +71,27 @@ try {
 }
 ```
 
+## Binary Values and CAS
+
+Vaylix `0.8.0` stores values as opaque bytes. The SDK keeps UTF-8 string
+methods for convenience and exposes explicit byte APIs for binary-safe flows:
+
+```ts
+const bytes = Buffer.from([0x00, 0xff, 0x61]);
+
+await client.setBytes('blob:1', bytes);
+console.log(await client.getBytes('blob:1'));
+
+await client.set('profile:json', '{"ok":true}');
+await client.set('profile:json', '{"ok":false}', { ifVersion: 1n });
+```
+
+Use:
+
+- `get()` / `set()` / `mget()` / `mset()` for UTF-8 text ergonomics
+- `getBytes()` / `setBytes()` / `mgetBytes()` / `msetBytes()` for exact byte payloads
+- `ifVersion` for `SET ... IF VERSION <version>` compare-and-set writes
+
 ## `DATABASE_URL`
 
 If no explicit `url` is provided, the SDK reads `process.env.DATABASE_URL`.
@@ -105,7 +126,7 @@ try {
 
 ## Health, Cluster, and Replication
 
-The SDK exposes the server `0.5.x` operational inspection surface directly:
+The SDK exposes the server `0.8.x` operational inspection surface directly:
 
 ```ts
 const health = await client.health();
@@ -132,7 +153,7 @@ await client.pauseReplication();
 await client.resumeReplication();
 ```
 
-Those are for controlled administrative workflows. They are not ordinary application commands. In the current `0.5.x` server line, writes on non-leaders are rejected with typed server errors, while default reads should be sent to the leader unless the application explicitly accepts stale follower reads.
+Those are for controlled administrative workflows. They are not ordinary application commands. In the current `0.8.x` server line, writes on non-leaders are rejected with typed server errors, while default reads should be sent to the leader unless the application explicitly accepts stale follower reads.
 
 ## Transactions
 
@@ -153,12 +174,14 @@ Example `EXEC` result:
 ```ts
 [
   { status: 'OK' },
-  { status: 'OK', value: 'alpha' },
+  { status: 'OK', value: 'alpha', valueBytes: Buffer.from('alpha') },
   { status: 'OK', boolean: true },
 ]
 ```
 
-The structured `EXEC` transport payload in server `0.3.0` is what makes this result shape reliable. Older stringified transaction results were lossy.
+The structured `EXEC` transport payload in server `0.3.0` is what makes this
+result shape reliable. In `0.8.0`, the typed payload also preserves exact byte
+values through fields such as `valueBytes`.
 
 ## Error Types
 
@@ -198,4 +221,6 @@ The current SDK surface covers:
 - transactions
 - simple pooling
 
-It is still intentionally narrower than the full Rust CLI, but it covers the core application-facing and HA-aware operational surface shipped in the current `0.5.x` server line.
+It is still intentionally narrower than the full Rust CLI, but it covers the
+core application-facing and HA-aware operational surface shipped in the current
+`0.8.x` server line.

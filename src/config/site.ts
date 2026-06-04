@@ -4,7 +4,7 @@ export const siteUrl =
 export const siteTitle = 'Vaylix Docs';
 
 export const siteDescription =
-  'Documentation for Vaylix, a transport-first Rust key/value database with framed binary transport, optional TLS/mTLS, default-on compression, quorum-backed HA behavior, WAL plus snapshot durability, audit logging, and leader-scoped atomic transactions.';
+  'Documentation for Vaylix, a secure, consensus-backed key-value database for operational state.';
 
 export const ogDescription =
   'Reference and operational documentation for the Vaylix database project.';

@@ -58,9 +58,11 @@ Example:
 metrics prom
 ```
 
-## String Data Commands
+## Key Value Commands
 
-The current user-visible data model is `String -> String`.
+Keys are UTF-8 strings. Values are opaque bytes. CLI examples below use text
+input, which is sent as UTF-8, but the transport and SDK also support arbitrary
+binary payloads.
 
 ### `GET`
 
@@ -79,15 +81,17 @@ get app:mode
 ### `SET`
 
 ```text
-set <key> <value> [nx|xx] [ex <seconds>|px <millis>] [keepttl] [get]
+set <key> <value> [nx|xx] [if version <version>] [ex <seconds>|px <millis>] [keepttl] [get]
 ```
 
-Writes a value with optional conditional write behavior, expiration, TTL preservation, and previous-value return.
+Writes a value with optional existence conditions, version-based compare-and-set,
+expiration, TTL preservation, and previous-value return.
 
 Example:
 
 ```text
 set app:mode production ex 60
+set profile:blob updated if version 7
 ```
 
 ### `SETNX`
@@ -155,7 +159,8 @@ Returns whether the key exists.
 
 ## Numeric Operations
 
-Numeric commands interpret the stored string as a signed integer.
+Numeric commands interpret the stored value as a signed integer encoded in UTF-8
+text.
 
 ### `INCR`
 
@@ -405,7 +410,7 @@ pause replication
 resume replication
 ```
 
-These are administrative controls for exceptional operational workflows. Normal `0.5.x` failover uses leader election; application writes should target the current leader.
+These are administrative controls for exceptional operational workflows. Normal failover uses leader election; application writes should target the current leader.
 
 ## User, Role, and Grant Management
 

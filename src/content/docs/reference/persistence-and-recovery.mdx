@@ -12,6 +12,7 @@ Vaylix currently uses:
 - a manifest describing the durable snapshot baseline
 - storage format version `3`
 - MessagePack-based engine serialization inside encrypted persistence files
+- persisted binary-safe values and value versions in WAL, snapshots, replication snapshots, and logical backups
 
 ## Snapshot Flow
 
@@ -58,6 +59,9 @@ Each WAL entry is:
 
 The current engine treats one WAL entry as the atomic durability unit for committed changes.
 
+In `0.8.0`, value-bearing WAL operations preserve exact byte payloads and the
+stored `u64` value version used by compare-and-set writes.
+
 ## Storage Keyring
 
 At-rest encryption is server-managed.
@@ -89,6 +93,10 @@ File-backed backups use a sidecar:
 ```
 
 That manifest records the backup version, creation time, source sequence, entry count, byte length, SHA-256 digest, and hash algorithm.
+
+As of `0.8.0`, new logical backups use v2 with base64 value encoding so opaque
+byte payloads round-trip correctly. Existing v1 text logical backups are still
+restorable.
 
 ## Offline Storage and PITR Operations
 
