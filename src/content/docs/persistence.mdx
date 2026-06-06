@@ -1,0 +1,54 @@
+---
+title: Persistence
+description: WAL, snapshots, storage versioning, startup validation, and the durability contract behind acknowledged writes.
+---
+
+This page covers how Vaylix persists state and what an acknowledged write means on disk.
+
+**Since version:** `0.1.0`; storage versioning, binary-safe values, and stronger recovery validation expanded through `0.9.0`.
+
+**Caveat:** The storage format is versioned and fail-closed, but the project is still pre-1.0, so compatibility rules are documented explicitly instead of assumed.
+
+## Durability model
+
+Every acknowledged write is fsynced to the WAL before the server reports success.
+
+In HA mode, an acknowledged write is also committed to the configured replication boundary before success is returned.
+
+## Persistent structures
+
+- segmented WAL
+- encrypted snapshots
+- manifests
+- storage keyring
+- encrypted auth metadata
+
+## Startup validation
+
+Startup fails closed on:
+
+- checksum mismatch
+- truncated WAL
+- corrupt snapshot
+- corrupt manifest
+- snapshot/WAL continuity mismatch
+- unsupported storage format version
+
+## Storage format
+
+The durable storage format is versioned. Vaylix does not silently upgrade, partially migrate, or reinterpret unknown storage layouts.
+
+Current line:
+
+- storage format version `3`
+
+## Binary-safe values
+
+Keys are UTF-8 strings. Values are opaque bytes and remain byte-exact through WAL, snapshots, logical backup v2, and replication.
+
+Each stored value also carries a `u64` version used by compare-and-set writes.
+
+## Read next
+
+- [Backup and Restore](/backup-and-restore/)
+- [Reference / Protocol](/reference/protocol/)

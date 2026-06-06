@@ -1,0 +1,87 @@
+---
+title: Configuration
+description: Runtime flags, environment variables, and the practical choices that change Vaylix behavior.
+---
+
+This page covers the runtime settings that affect networking, persistence, auth, replication, and operational limits.
+
+**Since version:** `0.1.0`; replication-related flags expanded across `0.5.x` through `0.9.0`.
+
+**Caveat:** Some defaults are conservative because Vaylix is designed for operational state, not cache workloads.
+
+## Core paths
+
+- Native and local runs default to `./default.vaylix`.
+- Docker images override `VAYLIX_DATA_DIR` to `/var/lib/vaylix`.
+- `VAYLIX_BACKUP_DIR` defaults under the active data directory unless overridden.
+
+## Identity and credentials
+
+- `VAYLIX_USER`
+- `VAYLIX_PASSWORD`
+- `VAYLIX_DISABLE_AUTH`
+
+Authentication is enabled by default. Disabling it is appropriate only for trusted local testing.
+
+## Network and TLS
+
+- `VAYLIX_BIND`
+- `VAYLIX_PORT`
+- `VAYLIX_SSL`
+- `VAYLIX_TLS_CERT`
+- `VAYLIX_TLS_KEY`
+- `VAYLIX_TLS_CLIENT_CA`
+
+If `VAYLIX_TLS_CLIENT_CA` is configured, clients must present certificates signed by that CA. There is no plaintext fallback on a TLS listener.
+
+## Persistence
+
+- `VAYLIX_WAL_SYNC`
+- `VAYLIX_WAL_SEGMENT_SIZE_BYTES`
+- `VAYLIX_WAL_RETAIN_SEGMENTS`
+- `VAYLIX_SNAPSHOT_INTERVAL_SECONDS`
+
+`VAYLIX_WAL_SYNC` is the main durability/latency tradeoff. Vaylix is intended to run with durable settings, so benchmark expectations should be set accordingly.
+
+## Replication and HA
+
+- `VAYLIX_REPLICATION_ROLE`
+- `VAYLIX_NODE_ID`
+- `VAYLIX_REPLICATION_GROUP_ID`
+- `VAYLIX_REPLICATION_ADVERTISE_ADDR`
+- `VAYLIX_CLUSTER_PEERS`
+- `VAYLIX_WRITE_ACK_MODE`
+- `VAYLIX_REPLICATION_ACK_TIMEOUT_MS`
+
+For HA deployments, use three voting nodes in one region. `majority` / `replica` acknowledgement is the intended production mode.
+
+## Operational guards
+
+- `VAYLIX_MAX_CONNECTIONS`
+- `VAYLIX_MAX_REQUEST_PAYLOAD_BYTES`
+- `VAYLIX_MAX_KEY_BYTES`
+- `VAYLIX_MAX_VALUE_BYTES`
+- `VAYLIX_MAX_KEYS_PER_BATCH`
+- `VAYLIX_MAX_TRANSACTION_QUEUE_LEN`
+- `VAYLIX_REQUESTS_PER_SECOND`
+- `VAYLIX_REQUEST_BURST`
+- `VAYLIX_IDLE_TIMEOUT_SECONDS`
+
+These are backpressure and abuse-surface controls, not tuning knobs for arbitrary throughput gains.
+
+## Audit and security controls
+
+- `VAYLIX_AUDIT_LOG_PATH`
+- `VAYLIX_AUDIT_COMMANDS`
+- `VAYLIX_SLOW_COMMAND_THRESHOLD_MS`
+- `VAYLIX_AUTH_FAILURE_WINDOW_SECONDS`
+- `VAYLIX_AUTH_FAILURE_LIMIT`
+- `VAYLIX_AUTH_LOCKOUT_SECONDS`
+
+Lockout state is process-local. A restart clears counters, so persistent abuse throttling should also exist at the deployment boundary.
+
+## Read next
+
+- [Deployment](/deployment/)
+- [Security](/security/)
+- [Persistence](/persistence/)

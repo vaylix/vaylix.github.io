@@ -1,16 +1,18 @@
 import {
   latestDockerPassword,
   latestDockerUser,
+  latestSdkVersion,
   latestServerImage,
+  latestServerVersion,
 } from './versions';
 
 export const heroProperties = [
   'Raft-style quorum replication',
-  'Encrypted WAL and snapshot persistence',
-  'Authentication and RBAC enabled by default',
+  'Encrypted WAL and snapshots',
+  'Auth and RBAC enabled by default',
   'Structured binary protocol (VTP2)',
   'Deterministic error codes',
-  'Production-oriented runtime and recovery path',
+  'Production-oriented runtime',
 ];
 
 export const heroExample = `docker run --rm \\
@@ -18,113 +20,113 @@ export const heroExample = `docker run --rm \\
   -v vaylix-data:/var/lib/vaylix \\
   -e VAYLIX_USER=${latestDockerUser} \\
   -e VAYLIX_PASSWORD=${latestDockerPassword} \\
-  ${latestServerImage}
+  ${latestServerImage}:${latestServerVersion.slice(1)}
+`;
 
-./vaylix-client --url 'vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173'
+export const landingDockerExample = `docker run --rm \\
+  -p 9173:9173 \\
+  -v vaylix-data:/var/lib/vaylix \\
+  -e VAYLIX_USER=${latestDockerUser} \\
+  -e VAYLIX_PASSWORD=${latestDockerPassword} \\
+  ${latestServerImage}:${latestServerVersion.slice(1)}
+`;
 
-vaylix> set control:epoch 42
+export const landingSdkExample = `import { createClient } from '@vaylix/client';
+
+const client = createClient({
+  url: 'vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173',
+});
+
+await client.connect();
+
+try {
+  await client.set('config:feature-x', 'enabled');
+  const value = await client.get('config:feature-x');
+  const ttlApplied = await client.expire('config:feature-x', 60);
+  const casOk = await client.set('config:feature-x', 'disabled', { ifVersion: 1n });
+
+  console.log({ value, ttlApplied, casOk });
+} finally {
+  await client.close();
+}`;
+
+export const landingCliReplExample = `$ vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
+vaylix> SET config:env production
 OK
-vaylix> get control:epoch
-42`;
+vaylix> GET config:env
+production
+vaylix> SET config:env staging IF VERSION 1
+true
+vaylix> GET config:env
+staging
+vaylix> TTL config:env
+-1
+vaylix> EXIT
+$`;
 
-export const whatVaylixIs = [
-  'Transport-first architecture with the protocol surface isolated from the storage engine.',
-  'Deterministic durability through WAL-backed writes, snapshotting, startup validation, and explicit failure on corruption.',
-  'Explicit failure semantics for protocol, storage, auth, and replication paths.',
-  'Designed for operational state rather than application data modeling.',
+export const landingCliScriptExample = `printf 'SET flags:cli on
+GET flags:cli
+SET flags:cli off IF VERSION 1
+GET flags:cli
+EXIT
+' | vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'`;
+
+export const suitableWorkloads = [
+  'Configuration and feature flag storage',
+  'Distributed coordination metadata',
+  'Rate limiting counters with TTL',
+  'Session coordination state',
+  'Internal platform state that must be consistent across nodes',
 ];
 
-export const useCases = [
-  'Configuration storage',
-  'Feature flags',
-  'Coordination metadata',
-  'Internal platform state',
-  'Distributed control planes',
+export const notForWorkloads = [
+  'Caching: use Redis or Valkey',
+  'Application data storage: use Postgres',
+  'Kubernetes cluster coordination: use etcd',
+  'Pub/sub messaging: use Redis, Valkey, or NATS',
 ];
 
-export const whatVaylixIsNot = [
-  'Not a Redis-compatible data-structure server.',
-  'Not a document database.',
-  'Not a distributed SQL engine.',
-  'Not a caching tier.',
+export const guaranteeFacts = [
+  'Every acknowledged write has been fsynced to the WAL.',
+  'On a replicated cluster, every acknowledged write has been committed to a quorum.',
+  'Reads on the same connection are consistent with the last committed write.',
+  'The audit log is hash-chained and tamper-evident at startup.',
 ];
 
-export const architectureFlow = [
-  'client',
-  'transport',
-  'server',
-  'engine',
+export const nonGuarantees = [
+  'No MVCC.',
+  'No distributed transactions.',
+  'No claim beyond serialized leader execution, WAL durability, and quorum-backed acknowledgement.',
+  'No linearizable follower reads.',
 ];
 
-export const persistenceFlow = ['replication', 'WAL', 'snapshot'];
+export const architectureLayers = ['client', 'transport', 'server', 'engine'];
+export const architecturePersistence = ['replication', 'WAL', 'snapshot'];
 
 export const architectureNotes = [
-  'Transport is isolated from the engine and owns framing, negotiation, compression, and request/response encoding.',
-  'The engine is unaware of authentication and RBAC; those are enforced at the server layer.',
-  'Replication runs over the main protocol surface instead of a separate side channel.',
+  'Transport owns framing, negotiation, compression, and request decoding.',
+  'The server owns auth, RBAC, maintenance mode, replication policy, and request routing.',
+  'The engine owns durable state, WAL replay, snapshots, and logical backup data.',
 ];
 
-export const guarantees = [
-  'Quorum-backed write acknowledgement.',
-  'No committed entry is lost.',
-  'Encrypted persistence for WAL and snapshots.',
-  'Deterministic startup validation before accepting traffic.',
-  'Explicit failure on corruption or continuity mismatch.',
+export const readinessLinks = [
+  { label: 'Configuration', href: '/configuration/' },
+  { label: 'Deployment', href: '/deployment/' },
+  { label: 'Security', href: '/security/' },
+  { label: 'Replication', href: '/replication/' },
+  { label: 'Persistence', href: '/persistence/' },
+  { label: 'Backup and restore', href: '/backup-and-restore/' },
 ];
 
-export const productionReadiness = [
-  {
-    label: 'TLS and mTLS support',
-    href: '/reference/security-model/',
-  },
-  {
-    label: 'Audit logging',
-    href: '/reference/security-model/',
-  },
-  {
-    label: 'Backup and restore',
-    href: '/reference/persistence-and-recovery/',
-  },
-  {
-    label: 'Chaos-tested replication',
-    href: '/guides/server-operations/',
-  },
-  {
-    label: 'Stability policy',
-    href: '/reference/stability-and-compatibility/',
-  },
+export const compatibilityLinks = [
+  { label: 'Command reference', href: '/reference/commands/' },
+  { label: 'Error codes', href: '/reference/error-codes/' },
+  { label: 'Protocol', href: '/reference/protocol/' },
+  { label: 'Comparison', href: '/comparison/' },
+  { label: 'FAQ', href: '/faq/' },
 ];
 
-export const gettingStartedLinks = [
-  {
-    label: 'Install and build',
-    href: '/getting-started/install-and-build/',
-  },
-  {
-    label: 'Run a local node',
-    href: '/getting-started/run-local/',
-  },
-  {
-    label: 'Command reference',
-    href: '/reference/commands/',
-  },
-];
-
-export const stabilityLinks = [
-  {
-    label: 'Storage format policy',
-    href: '/reference/stability-and-compatibility/#storage-format-policy',
-  },
-  {
-    label: 'Protocol compatibility policy',
-    href: '/reference/stability-and-compatibility/#protocol-compatibility-policy',
-  },
-  {
-    label: 'Versioning guarantees',
-    href: '/reference/stability-and-compatibility/#versioning-guarantees',
-  },
-  {
-    label: 'STABILITY.md',
-    href: '/STABILITY.md',
-  },
-];
+export const currentLine = {
+  server: latestServerVersion,
+  sdk: latestSdkVersion,
+};

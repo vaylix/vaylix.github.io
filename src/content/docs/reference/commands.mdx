@@ -1,422 +1,119 @@
 ---
 title: Command Reference
-description: Current Vaylix command grammar, grouped by purpose, with concise examples and single-node semantics.
+description: The current Vaylix command grammar, grouped by purpose, with signatures that match the shipped server.
 ---
 
-Vaylix commands are parsed by the shared `command` crate before being encoded into transport requests. The client keeps `help`, `exit`, and `quit` local; server-recognized commands go over the framed binary transport.
+This page covers the current server-recognized commands and the guarantees or caveats attached to each group.
 
-## Connection and Diagnostics
+**Since version:** `0.1.0`; binary-safe values and version-based CAS were added in `0.8.0`.
 
-### `AUTH`
+**Caveat:** Vaylix is not Redis-compatible. Command names, reply shapes, and semantics are Vaylix-specific.
+
+## Connection and diagnostics
 
 ```text
 auth <username> <password>
-```
-
-Authenticates the current connection when auth is enabled.
-
-Example:
-
-```text
-auth vaylix vaylix
-```
-
-### `PING`
-
-```text
 ping [message]
-```
-
-Returns `PONG` or the supplied message.
-
-Example:
-
-```text
-ping healthcheck
-```
-
-### `INFO`
-
-```text
 info
-```
-
-Returns deterministic key/value fields with section prefixes such as `server.*`, `transport.*`, `persistence.*`, `security.*`, `runtime.*`, and `metrics.*`.
-
-### `METRICS`
-
-```text
 metrics
 metrics prom
+health
 ```
 
-`metrics` returns OTel-aligned key/value metrics like `vaylix.server.request.count`. `metrics prom` returns the same contract in Prometheus text exposition form.
+- `auth` authenticates the current session when auth is enabled
+- `ping` returns `PONG` or the provided message
+- `info` returns deterministic key/value sections such as `server.*`, `transport.*`, `persistence.*`, and `security.*`
+- `metrics` returns numeric metrics
+- `metrics prom` returns Prometheus exposition text
+- `health` returns machine-readable readiness and role state
 
-Example:
-
-```text
-metrics prom
-```
-
-## Key Value Commands
-
-Keys are UTF-8 strings. Values are opaque bytes. CLI examples below use text
-input, which is sent as UTF-8, but the transport and SDK also support arbitrary
-binary payloads.
-
-### `GET`
+## Key-value operations
 
 ```text
 get <key>
-```
-
-Reads a value. Missing keys return `NOT_FOUND`.
-
-Example:
-
-```text
-get app:mode
-```
-
-### `SET`
-
-```text
 set <key> <value> [nx|xx] [if version <version>] [ex <seconds>|px <millis>] [keepttl] [get]
-```
-
-Writes a value with optional existence conditions, version-based compare-and-set,
-expiration, TTL preservation, and previous-value return.
-
-Example:
-
-```text
-set app:mode production ex 60
-set profile:blob updated if version 7
-```
-
-### `SETNX`
-
-```text
 setnx <key> <value>
-```
-
-Writes only when the key does not already exist.
-
-### `GETDEL`
-
-```text
 getdel <key>
-```
-
-Reads and deletes a key atomically.
-
-### `GETEX`
-
-```text
 getex <key> [ex <seconds>|px <millis>|persist]
-```
-
-Reads a key and updates or clears its expiration.
-
-### `MGET`
-
-```text
 mget <key> [key ...]
-```
-
-Reads multiple keys in one request.
-
-Example:
-
-```text
-mget app:mode app:region
-```
-
-### `MSET`
-
-```text
 mset <key> <value> [key value ...]
-```
-
-Writes multiple key/value pairs in one request.
-
-### `DEL` / `DELETE`
-
-```text
 del <key> [key ...]
 delete <key> [key ...]
-```
-
-Deletes one or more keys and returns the deleted count.
-
-### `EXISTS`
-
-```text
 exists <key>
 ```
 
-Returns whether the key exists.
+Keys are UTF-8 strings. Values are opaque bytes. Text CLI examples send UTF-8, but binary clients and the SDK can send arbitrary byte payloads.
 
-## Numeric Operations
+`SET ... IF VERSION <version>` is the compare-and-set primitive. It succeeds only when the current stored version matches the expected version.
 
-Numeric commands interpret the stored value as a signed integer encoded in UTF-8
-text.
-
-### `INCR`
+## Numeric and TTL operations
 
 ```text
 incr <key>
-```
-
-Increments a numeric string and returns the new value.
-
-### `DECR`
-
-```text
 decr <key>
-```
-
-Decrements a numeric string and returns the new value.
-
-If the current value is not parseable as an integer, the server returns a structured error.
-
-## Expiration and Key Lifecycle
-
-### `EXPIRE`
-
-```text
 expire <key> <seconds>
-```
-
-Sets a TTL in whole seconds.
-
-### `TTL`
-
-```text
 ttl <key>
-```
-
-Returns the remaining TTL using the current integer TTL convention.
-
-### `PERSIST`
-
-```text
 persist <key>
 ```
 
-Removes a key expiration if present.
+`INCR` and `DECR` operate on UTF-8 encoded signed integers. Invalid integer values return structured server errors rather than silent coercion.
 
-Expired keys are purged on normal command paths, during background sweeps, and during snapshotting.
-
-## Rename and Scan
-
-### `RENAME`
+## Rename, scan, and introspection
 
 ```text
 rename <source> <destination>
-```
-
-Renames a key, replacing the destination if needed.
-
-### `RENAMENX`
-
-```text
 renamenx <source> <destination>
-```
-
-Renames a key only when the destination does not exist.
-
-### `SCAN`
-
-```text
 scan <cursor> [match <pattern>] [count <n>]
-```
-
-Returns a cursor page of keys in deterministic sorted order.
-
-Example:
-
-```text
-scan 0 match app:* count 10
-```
-
-## Database Introspection and Maintenance
-
-### `DBSIZE` and `COUNT`
-
-```text
 dbsize
 count
-```
-
-Both return the live key count.
-
-### `LIST`
-
-```text
 list
-```
-
-Returns live key/value entries.
-
-### `CLEAR` and `FLUSHDB`
-
-```text
 clear
 flushdb
-```
-
-Clears the current keyspace. When auth/RBAC is enabled, this requires the `clear` permission.
-
-### `SAVE` and `SNAPSHOT`
-
-```text
 save
 snapshot
 ```
 
-Write a physical encrypted snapshot, seal the active WAL segment, open a new active segment, and prune retained sealed segments according to runtime policy.
+`scan` is cursor-based and returns deterministic sorted key order.
 
-## Logical Backup and Restore
+`clear` / `flushdb` requires the `clear` permission when RBAC is enabled.
 
-### `BACKUP`
+## Backup and restore
 
 ```text
 backup
 backup to <path>
 backup verify <logical-dump-json>
 backup verify from <path>
-```
-
-Logical backup commands operate on JSON dumps rather than physical storage files.
-
-- `backup` returns the logical dump inline
-- `backup to <path>` writes a server-local dump under the configured backup directory
-- `backup verify ...` validates dump structure and, for file-backed dumps, verifies the manifest sidecar
-
-Example:
-
-```text
-backup to nightly.json
-```
-
-### `RESTORE`
-
-```text
 restore <logical-dump-json>
 restore from <path>
 restore check <logical-dump-json>
 restore check from <path>
 ```
 
-Restore commands replace the current keyspace with the live entries from a validated logical backup. `restore check ...` performs validation without mutating engine state or WAL.
+`restore` replaces the current keyspace with the validated logical backup.
 
-Example:
+Known limitation:
 
-```text
-restore check from nightly.json
-```
+- restore is single-node engine replacement, not a distributed transaction surface
 
 ## Transactions
 
-### `MULTI`
-
 ```text
 multi
-```
-
-Starts queueing commands for the current connection.
-
-### `EXEC`
-
-```text
 exec
-```
-
-Applies the queued commands as one single-node atomic WAL-backed batch if every queued command succeeds.
-
-### `DISCARD`
-
-```text
 discard
 ```
 
-Drops the queued transaction.
+Transactions are serialized leader-side execution over a queued command list.
 
-Current boundaries:
+Current limits:
 
-- transactions are single-node only
-- transaction lifetimes are bounded by a server-side timeout
-- sequence-tagged or pipelined requests are rejected while a transaction is active
-- maintenance mode rejects transaction entry and commit
+- no MVCC
+- no distributed transactions
+- no isolation-level selection
+- pipelined/sequence-tagged requests are rejected while a transaction is active
 
-## Maintenance Mode
-
-### `MAINTENANCE`
-
-```text
-maintenance on
-maintenance off
-maintenance status
-```
-
-Maintenance mode is a persisted read-only admin mode. It survives restart through a sentinel file under the data directory.
-
-While maintenance mode is enabled:
-
-- reads, `info`, `metrics`, `metrics prom`, backup verification flows, `show *`, `whoami`, and `maintenance status` remain available
-- mutating writes, restore flows, and transaction commands are rejected
-
-## HA and Replication
-
-### `HEALTH`
-
-```text
-health
-```
-
-Returns machine-readable readiness and role state as key/value fields.
-
-### `SHOW CLUSTER`
-
-```text
-show cluster
-```
-
-Returns cluster state such as local role, term, leader ID, quorum size, member count, sync policy, commit sequence, and local applied sequence.
-
-### `SHOW REPLICATION`
-
-```text
-show replication
-```
-
-Returns replication diagnostics such as role, node ID, group ID, leader hint, commit sequence, retention floor, paused state, and health reason.
-
-### `CLUSTER JOIN` and `CLUSTER REMOVE`
-
-```text
-cluster join <node-id> <host:port>
-cluster remove <node-id>
-```
-
-Updates cluster membership from the leader. The `<node-id>` must be stable across restarts, and `<host:port>` must be reachable by peer replication traffic.
-
-### Replication Controls
-
-```text
-promote follower
-pause replication
-resume replication
-```
-
-These are administrative controls for exceptional operational workflows. Normal failover uses leader election; application writes should target the current leader.
-
-## User, Role, and Grant Management
-
-These commands are server-side administrative commands. The engine remains unaware of users and roles.
-
-### User and Role Lifecycle
+## RBAC and administration
 
 ```text
 create user <username> password <password>
@@ -424,47 +121,10 @@ alter user <username> password <password>
 drop user <username>
 create role <role>
 drop role <role>
-```
-
-Example:
-
-```text
-create user jane password SecurePass123
-```
-
-Password policy currently requires at least 12 characters with at least one ASCII letter and one ASCII digit.
-
-### Role Assignment
-
-```text
 grant role <role> to <username>
 revoke role <role> from <username>
-```
-
-Example:
-
-```text
-grant role readonly to jane
-```
-
-### Permission Grants
-
-```text
 grant permission <permission> [on <pattern>] to <role>
 revoke permission <permission> [on <pattern>] from <role>
-```
-
-The `on <pattern>` clause is optional. When omitted, the pattern defaults to `*`.
-
-Example:
-
-```text
-grant permission read on app:* to readonly
-```
-
-### Grant Introspection
-
-```text
 show users
 show roles
 show grants
@@ -473,9 +133,26 @@ show grants for role <role>
 whoami
 ```
 
-Use `show grants` for the current authenticated user, or the `for user` / `for role` forms for administrative inspection.
+Password policy currently requires at least 12 characters with at least one ASCII letter and one ASCII digit.
 
-## Client-Local Commands
+## Maintenance and replication administration
+
+```text
+maintenance on
+maintenance off
+maintenance status
+show cluster
+show replication
+cluster join <node-id> <host:port>
+cluster remove <node-id>
+promote follower
+pause replication
+resume replication
+```
+
+These commands are for operator workflows. Application traffic should normally target the current leader and avoid direct control-plane mutation.
+
+## Client-local commands
 
 ```text
 help
@@ -483,4 +160,4 @@ exit
 quit
 ```
 
-These commands are handled by the client REPL and are never sent to the server.
+These are handled by the interactive client and are not sent to the server.

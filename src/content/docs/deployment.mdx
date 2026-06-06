@@ -1,0 +1,56 @@
+---
+title: Deployment
+description: Recommended topologies, path defaults, and operational boundaries for running Vaylix outside development.
+---
+
+This page covers how to deploy Vaylix as a durable operational-state database rather than as a cache or general application datastore.
+
+**Since version:** `0.5.0` for quorum HA; deployment defaults updated through `0.9.0`.
+
+**Caveat:** Vaylix is pre-1.0. Treat minor release upgrades as deliberate operations, not invisible rolling churn.
+
+## Recommended shapes
+
+- Development: one standalone node
+- Production HA: three voting nodes in one region
+- Larger clusters: five voting nodes only when extra failure tolerance matters more than write latency
+
+## Data paths
+
+- Native and local runs default to `./default.vaylix`
+- Docker runs use `/var/lib/vaylix`
+- Backups and audit logs should live on persistent storage with the data directory
+
+Do not copy a live node directory between cluster members as a rejoin mechanism.
+
+## Traffic model
+
+- Route writes to the current leader
+- Treat follower reads as stale
+- Use `majority` / `replica` acknowledgement for HA-safe writes
+
+Vaylix does not implement linearizable follower reads.
+
+## Container example
+
+```bash
+docker run --rm \
+  -p 9173:9173 \
+  -v /srv/vaylix:/var/lib/vaylix \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=replace-me \
+  ghcr.io/vaylix/vaylix:0.9.0
+```
+
+## Operational boundaries
+
+- Use logical backup and restore for portable recovery workflows
+- Use physical snapshots and retained WAL for node-local recovery
+- Do not ignore startup validation failures
+- Keep TLS material and storage key material under operator control
+
+## Read next
+
+- [Configuration](/configuration/)
+- [Replication](/replication/)
+- [Backup and Restore](/backup-and-restore/)

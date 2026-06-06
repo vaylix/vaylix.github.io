@@ -1,0 +1,143 @@
+---
+title: Getting Started
+description: Run a local Vaylix node, connect with the TypeScript SDK, and issue real commands in a few minutes.
+---
+
+This page covers the shortest path from zero to a working local Vaylix instance with durable data.
+
+**Since version:** `0.1.0`, updated for server `0.9.0` and TypeScript SDK `0.4.0`.
+
+**Caveat:** Vaylix is pre-1.0. The examples below are current and working, but storage compatibility is still governed by the documented pre-1.0 policy.
+
+## Prerequisites
+
+- Docker, or
+- a Rust toolchain if you want to build the server locally
+- Node.js `>= 20.19.0` if you want to use the official TypeScript SDK
+
+## Run with Docker
+
+```bash
+docker run --rm \
+  -p 9173:9173 \
+  -v vaylix-data:/var/lib/vaylix \
+  -e VAYLIX_USER=vaylix \
+  -e VAYLIX_PASSWORD=vaylix \
+  ghcr.io/vaylix/vaylix:0.9.0
+```
+
+This starts one node with persisted state under the Docker volume mounted at `/var/lib/vaylix`.
+
+## Connect with the TypeScript SDK
+
+```bash
+npm install @vaylix/client
+```
+
+```ts
+import { createClient } from '@vaylix/client';
+
+const client = createClient({
+  url: 'vaylix://vaylix:vaylix@127.0.0.1:9173',
+});
+
+await client.connect();
+
+try {
+  await client.set('config:feature-x', 'enabled');
+  const value = await client.get('config:feature-x');
+  console.log(value);
+} finally {
+  await client.close();
+}
+```
+
+## Connect with the CLI
+
+If you already have the Rust workspace built locally, use the shipped REPL client:
+
+```bash
+$ vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
+vaylix> SET config:env production
+OK
+vaylix> GET config:env
+production
+vaylix> SET config:env staging IF VERSION 1
+true
+vaylix> GET config:env
+staging
+vaylix> TTL config:env
+-1
+vaylix> EXIT
+$
+```
+
+`TTL` follows the server integer contract. `-1` means the key exists without an expiry.
+
+### For scripting and automation
+
+Pipe commands over standard input for non-interactive shell usage:
+
+```bash
+printf 'SET flags:cli on
+GET flags:cli
+SET flags:cli off IF VERSION 1
+GET flags:cli
+EXIT
+' | vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
+```
+
+Expected output:
+
+```text
+OK
+vaylix> OK
+vaylix> on
+vaylix> true
+vaylix> off
+```
+
+## Run your first commands
+
+```ts
+import { createClient } from '@vaylix/client';
+
+const client = createClient({
+  url: 'vaylix://vaylix:vaylix@127.0.0.1:9173',
+});
+
+await client.connect();
+
+try {
+  await client.set('flags:beta-ui', 'on');
+  const value = await client.get('flags:beta-ui');
+
+  await client.expire('flags:beta-ui', 60);
+  const ttl = await client.ttl('flags:beta-ui');
+
+  const casOk = await client.set('flags:beta-ui', 'off', { ifVersion: 1n });
+
+  console.log({ value, ttl, casOk });
+} finally {
+  await client.close();
+}
+```
+
+The CAS example maps to `SET key value IF VERSION n`. It succeeds only when the stored version matches the expected version.
+
+## Build from source instead
+
+```bash
+cargo build --release -p server
+./target/release/vaylix --bind 127.0.0.1 --port 9173
+```
+
+Local native runs default to `./default.vaylix` unless `--data-dir` or `VAYLIX_DATA_DIR` overrides it.
+
+## Read next
+
+- [Configuration](/configuration/)
+- [Deployment](/deployment/)
+- [Security](/security/)
+- [Replication](/replication/)
+- [TypeScript client](/clients/typescript/)

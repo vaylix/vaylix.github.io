@@ -1,0 +1,62 @@
+---
+title: Protocol
+description: VTP2 framing, startup negotiation, request IDs, compression, and the boundaries of the wire contract.
+---
+
+This page covers the VTP2 binary protocol used by Vaylix clients, servers, and internal replication traffic.
+
+**Since version:** protocol version `2` is the current line; binary-safe value transport and parser hardening were extended in `0.8.0` and `0.9.0`.
+
+**Caveat:** VTP2 is a Vaylix-specific protocol. It is not Redis-compatible and it is not intended as a general wire standard.
+
+## Startup
+
+Each connection starts with capability negotiation.
+
+Negotiated concerns include:
+
+- protocol version
+- maximum frame length
+- compression support
+
+Invalid or contradictory startup capabilities are rejected cleanly before the connection enters normal request processing.
+
+## Frame model
+
+VTP2 is a framed binary protocol with:
+
+- fixed header
+- explicit payload length
+- request ID
+- checksum
+- optional compression
+
+The parser validates frame length before allocation and validates checksum before payload processing.
+
+## Request IDs
+
+Request IDs are fixed 16-byte UUID values on the wire. They are scoped to a session. Pipelined responses are returned against the matching request ID from the same session only.
+
+## Compression
+
+Small frames are left uncompressed. Larger frames can use zstd. Compression policy is negotiated and bounded by configured frame-size limits.
+
+Known limits:
+
+- compression is optional, not required
+- incompressible payloads still pay the negotiated transport overhead
+
+## Replication traffic
+
+Replication uses the same transport family rather than a separate side channel. Internal replication opcodes are not available to unauthenticated external sessions.
+
+## Client-facing implication
+
+If you are writing an SDK, treat:
+
+- framed parsing
+- request ID preservation
+- checksum validation
+- version negotiation
+
+as protocol correctness requirements, not optional implementation details.

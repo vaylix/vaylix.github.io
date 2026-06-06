@@ -17,6 +17,7 @@ export type ReleaseEntry = {
 type VersionedRelease = {
   version: string;
   date: string;
+  windowsArm?: boolean;
 };
 
 function releaseTag(version: string): string {
@@ -32,8 +33,8 @@ function assetHref(
   return `https://github.com/vaylix/vaylix/releases/download/${tag}/vaylix-${target}-${tag}-${suffix}`;
 }
 
-function releaseAssets(version: string): ReleaseAsset[] {
-  return [
+function releaseAssets(version: string, windowsArm = false): ReleaseAsset[] {
+  const baseAssets: ReleaseAsset[] = [
     {
       label: 'Linux',
       target: 'Server',
@@ -64,14 +65,6 @@ function releaseAssets(version: string): ReleaseAsset[] {
       arch: 'x86_64',
       format: '.zip',
       href: assetHref(version, 'server', 'windows-x86_64.zip'),
-      icon: 'windows',
-    },
-    {
-      label: 'Windows',
-      target: 'Server',
-      arch: 'aarch64',
-      format: '.zip',
-      href: assetHref(version, 'server', 'windows-aarch64.zip'),
       icon: 'windows',
     },
     {
@@ -106,26 +99,40 @@ function releaseAssets(version: string): ReleaseAsset[] {
       href: assetHref(version, 'client', 'windows-x86_64.zip'),
       icon: 'windows',
     },
-    {
+  ];
+
+  if (windowsArm) {
+    baseAssets.splice(4, 0, {
+      label: 'Windows',
+      target: 'Server',
+      arch: 'aarch64',
+      format: '.zip',
+      href: assetHref(version, 'server', 'windows-aarch64.zip'),
+      icon: 'windows',
+    });
+    baseAssets.push({
       label: 'Windows',
       target: 'Client',
       arch: 'aarch64',
       format: '.zip',
       href: assetHref(version, 'client', 'windows-aarch64.zip'),
       icon: 'windows',
-    },
-  ];
+    });
+  }
+
+  return baseAssets;
 }
 
 export function createReleaseEntry({
   version,
   date,
+  windowsArm = false,
 }: VersionedRelease): ReleaseEntry {
   const tag = releaseTag(version);
   return {
     version: tag,
     date,
     notesHref: `https://github.com/vaylix/vaylix/releases/tag/${tag}`,
-    assets: releaseAssets(tag),
+    assets: releaseAssets(tag, windowsArm),
   };
 }

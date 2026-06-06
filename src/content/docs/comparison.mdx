@@ -1,0 +1,71 @@
+---
+title: How Vaylix compares to Redis, Valkey, and etcd
+description: Honest tradeoffs between Vaylix and adjacent tools used for caches, coordination, and durable operational state.
+---
+
+This page covers design goals, guarantees, and tradeoffs rather than benchmark claims.
+
+**Since version:** comparison guidance updated for the `0.9.0` server line.
+
+**Caveat:** These are not throughput benchmarks. They are design comparisons for workload fit.
+
+These comparisons are not benchmarks. They are honest assessments of design goals, guarantees, and tradeoffs. Vaylix loses on throughput against Redis. That is intentional. The question is whether throughput is the right metric for your workload.
+
+## Redis and Valkey
+
+Redis and Valkey are the right tools for caches, ephemeral counters, pub/sub, leaderboards, and rich in-memory data structures.
+
+Their durability tradeoffs are different from Vaylix:
+
+- open source Redis does not enable `appendonly yes` by default
+- default RDB snapshot intervals can lose acknowledged writes between snapshot boundaries, commonly on the order of minutes rather than single writes
+- `appendfsync always` closes much of that durability gap, but it changes the throughput profile substantially
+
+Vaylix makes the opposite tradeoff. It is built for acknowledged writes that must survive crashes without relying on an operator to opt into stricter persistence later.
+
+Vaylix does not implement:
+
+- Redis protocol compatibility
+- lists, sets, hashes, streams, or sorted sets
+- pub/sub
+- Lua scripting
+
+Valkey is a Redis fork with compatible semantics, so the same durability tradeoffs apply.
+
+| Property | Redis (default) | Redis (`appendfsync always`) | Vaylix |
+| --- | --- | --- | --- |
+| Acknowledged write durability | AOF off by default; RDB snapshot loss window | fsync on every write | fsync on every write |
+| Replication | Async | Async | Raft quorum |
+| Write acknowledgement | After local write | After local fsync | After quorum commit |
+| Auth model | Password only, optional | Password only, optional | RBAC with pattern-scoped permissions |
+| Data structures | Rich | Rich | Key-value only |
+| Throughput | Very high | Moderate | Moderate |
+| Primary use case | Cache, ephemeral state | Durable cache | Operational state |
+
+## etcd
+
+etcd has correct durability and consensus semantics. Vaylix does not claim to be better engineered than etcd.
+
+The difference is operational identity and surface area:
+
+- etcd is shaped by Kubernetes and the workflows around it
+- etcd ships MVCC and a watch API
+- etcd is often the right choice when those semantics are the workload
+
+Vaylix deliberately ships a smaller model for teams that want durable operational state without carrying the rest of that surface.
+
+| Property | etcd | Vaylix |
+| --- | --- | --- |
+| Consensus | Raft | Raft-style |
+| Durability | WAL + fsync | WAL + fsync |
+| Watch / reactive reads | Yes | No |
+| MVCC | Yes | No |
+| Primary audience | Kubernetes operators | Platform engineers without Kubernetes |
+| Auth model | TLS + RBAC | RBAC + TLS/mTLS |
+| Operational complexity | High for non-Kubernetes use | Low |
+
+## When to use each
+
+- Use Redis or Valkey if you need a cache, pub/sub, rich data structures, or can tolerate some data loss.
+- Use etcd if you are running Kubernetes or need watch semantics and MVCC.
+- Use Vaylix if you need acknowledged writes to survive crashes, a simple RBAC model, and you are not running Kubernetes.

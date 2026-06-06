@@ -1,0 +1,57 @@
+---
+title: Backup and Restore
+description: Logical backup, restore validation, file-backed backup workflows, and the limits of the current recovery surface.
+---
+
+This page covers the logical backup and restore workflows Vaylix ships today.
+
+**Since version:** logical backup and restore from early releases; binary-safe backup v2 and manifest verification strengthened in `0.8.0` and `0.9.0`.
+
+**Caveat:** Logical backup is not a watch stream or continuous changefeed. It is a recovery mechanism, not a replication substitute.
+
+## Logical backup commands
+
+```text
+backup
+backup to <path>
+backup verify <dump>
+backup verify from <path>
+```
+
+- `backup` returns a logical dump inline
+- `backup to <path>` writes a server-local dump under the configured backup directory
+- `backup verify ...` validates structure and manifest integrity
+
+## Restore commands
+
+```text
+restore <dump>
+restore from <path>
+restore check <dump>
+restore check from <path>
+```
+
+- `restore ...` replaces the current keyspace with the validated logical backup
+- `restore check ...` validates the backup without mutating engine state
+
+These commands require the `restore` permission.
+
+## Backup versions
+
+- v1 logical backup: legacy text-value format, still restorable
+- v2 logical backup: base64-encoded byte values plus stored versions
+
+For binary values, use v2.
+
+## Path safety
+
+Server-local backup paths are sandboxed under the configured backup directory. Paths that resolve outside that directory are rejected.
+
+## PITR-oriented recovery
+
+Vaylix also keeps segmented WAL and snapshots for node-local recovery workflows. That is separate from logical backup export/import.
+
+## Read next
+
+- [Persistence](/persistence/)
+- [Security](/security/)

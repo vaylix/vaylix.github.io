@@ -1,0 +1,50 @@
+---
+title: FAQ
+description: Direct answers to the questions engineers usually ask before adopting Vaylix.
+---
+
+This page covers the questions that matter for evaluation, not marketing copy.
+
+**Since version:** FAQ updated for the `0.9.0` server line and `0.4.0` TypeScript SDK.
+
+**Caveat:** Vaylix is pre-1.0. The answers below describe current behavior, not promises about features that have not shipped.
+
+## Is Vaylix production ready?
+
+It is pre-1.0. That means the project is usable, but the storage format and compatibility guarantees are still governed by explicit pre-1.0 policy rather than a 1.x stability promise.
+
+It is already running in production inside AuthSafe. That is evidence of use, not a substitute for your own qualification.
+
+## How does Vaylix handle a leader crash?
+
+Vaylix uses a Raft-style quorum model. A write acknowledged before the crash has already been committed to a majority of nodes and is not lost. A write appended locally but not quorum-committed can be rolled back during leader replacement.
+
+## Can I use Vaylix as a drop-in replacement for Redis?
+
+No. The protocol is different, the client API is different, and the data model is key-value only.
+
+## Does Vaylix support transactions?
+
+It supports `MULTI` / `EXEC` / `DISCARD` with serialized leader execution and WAL-backed commit.
+
+Current limits:
+
+- no MVCC
+- no distributed transactions
+- no user-selectable isolation levels
+
+## What happens if a node falls behind in replication?
+
+The follower catches up through normal append replication. If it is too far behind, the leader can use snapshot bootstrap and then continue from the snapshot boundary.
+
+## Is the data encrypted at rest?
+
+Yes. WAL segments, snapshots, and related storage metadata are encrypted at rest through the storage keyring model, which also supports key rotation.
+
+## What client SDKs are available?
+
+TypeScript today. Other SDKs are not documented as current features.
+
+## What is the performance compared to Redis?
+
+Vaylix fsyncs every acknowledged write and, in HA mode, waits for quorum commit. It is slower than Redis under default configuration. That is the cost of the durability and consensus model.

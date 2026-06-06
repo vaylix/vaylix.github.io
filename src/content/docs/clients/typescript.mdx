@@ -1,0 +1,89 @@
+---
+title: TypeScript Client
+description: Use the official Node.js TypeScript SDK to connect to Vaylix over TCP or TLS.
+---
+
+This page covers the official TypeScript SDK and the parts of the server surface it exposes today.
+
+**Since version:** SDK support was introduced after the first server releases; examples below match `@vaylix/client` `0.4.0`.
+
+**Caveat:** The SDK is Node.js only. It does not load `.env` files for you, and it is not a browser client.
+
+## Install
+
+```bash
+npm install @vaylix/client
+```
+
+## Connect
+
+```ts
+import { createClient } from '@vaylix/client';
+
+const client = createClient({
+  url: 'vaylix://vaylix:vaylix@127.0.0.1:9173',
+});
+
+await client.connect();
+```
+
+The SDK also reads `process.env.DATABASE_URL` if no explicit URL is provided.
+
+## Common operations
+
+```ts
+await client.set('config:mode', 'production');
+await client.get('config:mode');
+await client.expire('config:mode', 60);
+await client.ttl('config:mode');
+await client.set('config:mode', 'maintenance', { ifVersion: 1n });
+```
+
+## Binary-safe values
+
+Vaylix values are opaque bytes. Use the byte APIs when values are not guaranteed to be UTF-8.
+
+```ts
+const payload = Buffer.from([0x00, 0xff, 0x61]);
+
+await client.setBytes('blob:1', payload);
+const restored = await client.getBytes('blob:1');
+```
+
+## Cluster and health calls
+
+```ts
+await client.health();
+await client.showCluster();
+await client.showReplication();
+await client.metrics();
+await client.metricsProm();
+```
+
+## TLS
+
+```ts
+const client = createClient({
+  url: 'vaylix://user:password@db.example.com:9173?ssl=true',
+  tls: {
+    enabled: true,
+    caFile: '/path/to/ca.pem',
+    certFile: '/path/to/client.crt',
+    keyFile: '/path/to/client.key',
+  },
+});
+```
+
+## Limits
+
+- no browser transport
+- no Redis protocol compatibility
+- no watch API
+
+The SDK is an implementation-specific client for the VTP2 server surface.
+
+## Read next
+
+- [Getting Started](/getting-started/)
+- [Reference / Commands](/reference/commands/)
+- [Reference / Protocol](/reference/protocol/)

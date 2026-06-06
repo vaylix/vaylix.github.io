@@ -1,0 +1,56 @@
+---
+title: Error Codes
+description: Stable client-facing error code families and what they mean operationally.
+---
+
+This page covers the stable error-code families exposed by Vaylix and how clients should interpret them.
+
+**Since version:** deterministic codes have been part of the protocol contract since early releases; the canonical code contract was documented explicitly in `0.9.0`.
+
+**Caveat:** Codes are stable identifiers. Human-readable messages may improve over time, but client behavior should key off the code, not the message text.
+
+## Families
+
+| Prefix | Scope | Meaning |
+| --- | --- | --- |
+| `CMD-*` | Command parser | Text command parsing and arity failures |
+| `TRN-*` | Transport | Framing, negotiation, checksum, compression, and I/O failures |
+| `ENG-*` | Engine | WAL, snapshot, manifest, keyring, and storage failures |
+| `SRV-*` | Server | Auth, RBAC, rate limiting, TLS, maintenance, replication, and admin failures |
+
+## Common command and transport codes
+
+| Code | Meaning |
+| --- | --- |
+| `CMD-002` | Unknown command |
+| `CMD-003` | Invalid command arity |
+| `TRN-005` | Protocol version mismatch |
+| `TRN-006` | Frame too large |
+| `TRN-009` | Frame checksum mismatch |
+| `TRN-014` | Protocol negotiation failed |
+| `TRN-018` | Protocol state violation |
+
+## Common engine and server codes
+
+| Code | Meaning |
+| --- | --- |
+| `ENG-007` | Persisted checksum validation failed |
+| `ENG-009` | Unsupported storage format |
+| `ENG-010` | Storage migration required |
+| `SRV-007` | Authentication required |
+| `SRV-008` | Authentication failed |
+| `SRV-017` | Permission denied |
+| `SRV-027` | Backup path rejected |
+| `SRV-028` | Audit chain verification failed |
+| `SRV-031` | Authentication locked |
+| `SRV-035` | Replication acknowledgement timeout |
+| `SRV-037` | Follower write rejected |
+
+## Client guidance
+
+- treat the code as the stable contract
+- surface the human-readable message to operators
+- do not parse behavior from message text
+- expect new codes to be additive in minor releases
+
+The canonical full list lives in the core repository’s `ERROR_CODES.md` for the current server line.

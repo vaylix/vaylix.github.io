@@ -1,70 +1,37 @@
 export const docsSidebar = [
   {
-    label: 'Introduction',
+    label: 'Docs',
     items: [
-      { label: 'Overview', slug: 'overview' },
-      { label: 'Why Vaylix', slug: 'why-vaylix' },
-      { label: 'Project Context', slug: 'reference/project-context' },
+      { label: 'Getting Started', slug: 'getting-started' },
+      { label: 'Configuration', slug: 'configuration' },
+      { label: 'Deployment', slug: 'deployment' },
+      { label: 'Security', slug: 'security' },
+      { label: 'Replication', slug: 'replication' },
+      { label: 'Persistence', slug: 'persistence' },
+      { label: 'Backup and Restore', slug: 'backup-and-restore' },
     ],
   },
   {
-    label: 'Getting Started',
-    items: [
-      {
-        label: 'Install and Build',
-        slug: 'getting-started/install-and-build',
-      },
-      {
-        label: 'Run Server and Client',
-        slug: 'getting-started/run-local',
-      },
-      {
-        label: 'Build from Source',
-        slug: 'getting-started/source-build',
-      },
-    ],
+    label: 'Clients',
+    items: [{ label: 'TypeScript', slug: 'clients/typescript' }],
   },
   {
-    label: 'Guides',
-    items: [
-      { label: 'Client Usage', slug: 'guides/client-usage' },
-      { label: 'Server Operations', slug: 'guides/server-operations' },
-      { label: 'Transactions', slug: 'guides/transactions' },
-    ],
-  },
-  {
-    label: 'Developer',
-    items: [{ label: 'TypeScript SDK', slug: 'developer/typescript-sdk' }],
+    label: 'Releases',
+    items: [{ label: '0.x series', link: '/releases/0.x/' }],
   },
   {
     label: 'Reference',
     items: [
-      { label: 'CLI Reference', slug: 'reference/cli-reference' },
-      { label: 'Command Reference', slug: 'reference/commands' },
-      { label: 'Wire Protocol', slug: 'reference/wire-protocol' },
-      {
-        label: 'Persistence and Recovery',
-        slug: 'reference/persistence-and-recovery',
-      },
-      {
-        label: 'Stability and Compatibility',
-        slug: 'reference/stability-and-compatibility',
-      },
-      { label: 'Security Model', slug: 'reference/security-model' },
-      {
-        label: 'Limits and Runtime Guards',
-        slug: 'reference/runtime-guards',
-      },
+      { label: 'Commands', slug: 'reference/commands' },
+      { label: 'Error Codes', slug: 'reference/error-codes' },
+      { label: 'Protocol', slug: 'reference/protocol' },
     ],
   },
   {
-    label: 'Architecture',
+    label: 'Evaluate',
     items: [
-      { label: 'System Design', slug: 'architecture/system-design' },
-      {
-        label: 'Roadmap Boundaries',
-        slug: 'architecture/roadmap-boundaries',
-      },
+      { label: 'Comparison', slug: 'comparison' },
+      { label: 'FAQ', slug: 'faq' },
     ],
   },
 ];

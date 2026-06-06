@@ -1,0 +1,55 @@
+---
+title: Replication
+description: Leader election, quorum write acknowledgement, follower catch-up, and the limits of the current HA model.
+---
+
+This page covers the current Vaylix HA model: one leader, quorum-backed writes, and follower catch-up through append and snapshot flows.
+
+**Since version:** `0.5.0` introduced the current HA line; safety and test coverage continued through `0.9.0`.
+
+**Caveat:** The implementation is pre-1.0 and intentionally narrow. There are no linearizable follower reads, no sharding, and no distributed transactions.
+
+## What the cluster does
+
+- elects one leader
+- routes writes to that leader
+- replicates WAL-backed entries to followers
+- commits a write only after the configured acknowledgement condition is satisfied
+
+## Write acknowledgement
+
+- `local`: local durability only
+- `majority` / `replica`: quorum-backed acknowledgement
+- `all`: waits for every current voter
+
+For HA use, `majority` is the intended setting.
+
+## Leader crash behavior
+
+If a write was acknowledged before the leader crashed, it was already committed to a quorum and is not lost.
+
+If a leader appended locally but crashed before quorum commit, that entry may be rolled back during leader replacement. That is expected Raft behavior.
+
+## Follower catch-up
+
+Followers catch up through append-entry replication. If a follower is too far behind, the leader can fall back to snapshot bootstrap and then resume log application from the snapshot boundary.
+
+## Read semantics
+
+- leader reads are the default consistency boundary
+- follower reads are local and may be stale
+
+Vaylix does not claim linearizable follower reads.
+
+## Operational expectations
+
+- use three voting nodes in one region
+- keep node IDs stable
+- keep peer addresses stable
+- route application writes to the current leader
+
+## Read next
+
+- [Deployment](/deployment/)
+- [Persistence](/persistence/)
+- [Comparison](/comparison/)

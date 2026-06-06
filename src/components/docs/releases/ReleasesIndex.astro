@@ -1,0 +1,38 @@
+---
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import { releaseSeries } from '../data/release-history';
+---
+
+<div class="not-prose space-y-6">
+  <p class="text-base leading-7 text-zinc-300">
+    Vaylix release history. Each series groups related versions by major compatibility boundary.
+  </p>
+
+  <CardGrid>
+    {releaseSeries.map((series) => (
+      <Card title={series.label}>
+        <div class="space-y-4 text-sm leading-6 text-zinc-300">
+          <dl class="grid gap-2">
+            <div>
+              <dt class="text-xs uppercase tracking-[0.16em] text-zinc-500">Latest version</dt>
+              <dd class="font-medium text-zinc-100">{series.latestVersion}</dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-[0.16em] text-zinc-500">Latest release date</dt>
+              <dd>{series.latestDate}</dd>
+            </div>
+          </dl>
+
+          <p>{series.summary}</p>
+
+          <a
+            href={series.href}
+            class="inline-flex rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-zinc-100 hover:border-emerald-400/40 hover:text-emerald-300"
+          >
+            View {series.label}
+          </a>
+        </div>
+      </Card>
+    ))}
+  </CardGrid>
+</div>

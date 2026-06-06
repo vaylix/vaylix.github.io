@@ -1,0 +1,28 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ReleaseSeriesPage from '../../components/docs/releases/ReleaseSeriesPage.astro';
+import { zeroSeriesReleases } from '../../components/docs/data/release-history';
+import { docsSidebar } from '../../config/sidebar';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '0.x Series',
+    description: 'Release notes and binary downloads for all Vaylix 0.x releases.',
+  }}
+  sidebar={docsSidebar}
+>
+  <p>
+    This page covers the Vaylix 0.x release line from the initial alpha through the current pre-1.0 hardening releases.
+  </p>
+
+  <p>
+    <strong>Since version:</strong> release series pages were added for the <code>0.9.0</code> documentation line.
+  </p>
+
+  <p>
+    <strong>Caveat:</strong> The 0.x line is pre-1.0. Storage format compatibility is not guaranteed across minor versions unless an individual release states that it is.
+  </p>
+
+  <ReleaseSeriesPage releases={zeroSeriesReleases} />
+</StarlightPage>

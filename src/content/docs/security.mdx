@@ -1,0 +1,56 @@
+---
+title: Security
+description: Authentication, RBAC, TLS, mTLS, encrypted persistence, and audit logging.
+---
+
+This page covers the security controls Vaylix applies at the server and storage layers.
+
+**Since version:** auth and RBAC from early releases; TLS/mTLS, encrypted persistence, and audit hardening expanded across `0.5.x` through `0.9.0`.
+
+**Caveat:** Vaylix has a narrow scope. Security guarantees apply to the key-value system it ships today, not to features it does not implement, such as watches or distributed transactions.
+
+## Authentication and RBAC
+
+Authentication is enabled by default. Permissions are coarse-grained and can be scoped to key patterns.
+
+Examples:
+
+- `read` on `flags:*`
+- `write` on `ratelimit:*`
+- `restore` for backup import workflows
+
+The storage engine is not aware of users, roles, or permissions. Those checks happen at the server boundary before engine execution.
+
+## TLS and mTLS
+
+- TLS is optional
+- mTLS is enabled by configuring a client CA
+- Certificates can be reloaded with `SIGHUP`
+
+If mTLS is configured, clients without a valid certificate are rejected. There is no plaintext fallback on a TLS listener.
+
+## Encrypted persistence
+
+WAL segments, snapshots, keyring material, and auth metadata are encrypted at rest. Key rotation is supported through the storage keyring model.
+
+## Audit logging
+
+The audit log is append-only, JSON-line encoded, and hash-chained. Startup verification fails closed if the chain is malformed or tampered with.
+
+Slow command audit events are emitted at or above the configured threshold.
+
+## Lockout model
+
+Authentication lockout is enforced per `(username, peer)` with a username-wide fallback for repeated peer rotation.
+
+Known limitation:
+
+- lockout counters are process-local and do not survive restart
+
+If you need restart-resistant throttling, enforce it at the ingress or host boundary as well.
+
+## Read next
+
+- [Deployment](/deployment/)
+- [Reference / Error Codes](/reference/error-codes/)
+- [Reference / Protocol](/reference/protocol/)

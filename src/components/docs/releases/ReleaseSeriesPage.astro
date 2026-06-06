@@ -1,0 +1,182 @@
+---
+import { FaApple, FaLinux, FaWindows } from 'react-icons/fa';
+import type { BinaryAsset, BinaryOs, ReleaseEntry } from '../data/release-history';
+
+interface Props {
+  releases: ReleaseEntry[];
+}
+
+const { releases } = Astro.props;
+
+const osLabels: Record<BinaryOs, string> = {
+  linux: 'Linux',
+  macos: 'macOS',
+  windows: 'Windows',
+};
+
+const osOrder: BinaryOs[] = ['linux', 'macos', 'windows'];
+
+function idFor(version: string) {
+  return version.replace(/^v/, 'v').replaceAll('.', '-');
+}
+
+function assetsFor(release: ReleaseEntry, os: BinaryOs) {
+  return release.assets.filter((asset) => asset.os === os);
+}
+
+function archesFor(assets: BinaryAsset[]) {
+  return Array.from(new Set(assets.map((asset) => asset.arch)));
+}
+
+function assetFor(assets: BinaryAsset[], arch: string, kind: BinaryAsset['kind']) {
+  return assets.find((asset) => asset.arch === arch && asset.kind === kind);
+}
+---
+
+<div class="not-prose space-y-10">
+  <div class="rounded-xl border border-white/10 bg-zinc-950/70 p-4 sm:p-5">
+    <p class="text-sm leading-7 text-zinc-300 sm:text-base">
+      The 0.x series established the Vaylix protocol, durable storage model, RBAC boundary,
+      replication line, binary-safe values, and pre-1.0 hardening contracts. It is still a pre-1.0
+      line: storage format compatibility is not guaranteed across minor versions unless a release
+      says so explicitly.
+    </p>
+  </div>
+
+  <nav aria-label="0.x release anchors" class="rounded-xl border border-white/10 bg-zinc-950/60 p-4">
+    <h2 class="mb-3 text-sm font-semibold text-zinc-100">Versions</h2>
+    <div class="flex flex-wrap gap-2">
+      {releases.map((release) => (
+        <a
+          href={`#${idFor(release.version)}`}
+          class="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-zinc-200 hover:border-emerald-400/40 hover:text-emerald-300"
+        >
+          {release.version}
+        </a>
+      ))}
+    </div>
+  </nav>
+
+  {releases.map((release) => (
+    <section id={idFor(release.version)} class="scroll-mt-24 space-y-6 border-t border-white/10 pt-8">
+      <header class="space-y-2">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 class="text-2xl font-semibold text-white">{release.version}</h2>
+          <time class="text-sm text-zinc-500" datetime={release.date}>
+            {release.date}
+          </time>
+        </div>
+        <p class="max-w-4xl text-sm leading-7 text-zinc-300 sm:text-base">{release.summary}</p>
+      </header>
+
+      <div class="space-y-3">
+        <h3 class="text-lg font-semibold text-white">What changed</h3>
+        <ul class="space-y-2 text-sm leading-6 text-zinc-300">
+          {release.changes.map((change) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-300" aria-hidden="true"></span>
+              <span>{change}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-lg font-semibold text-white">Breaking changes</h3>
+        {release.breakingChanges.length > 0 ? (
+          <ul class="space-y-2 text-sm leading-6 text-zinc-300">
+            {release.breakingChanges.map((change) => (
+              <li class="flex gap-3">
+                <span class="mt-2 size-1.5 shrink-0 rounded-full bg-amber-300" aria-hidden="true"></span>
+                <span>{change}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="text-sm text-zinc-400">No breaking changes in this release.</p>
+        )}
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-lg font-semibold text-white">Download</h3>
+        {release.assets.length === 0 ? (
+          <p class="text-sm text-zinc-400">Binaries not yet published for this release.</p>
+        ) : (
+          <div class="grid gap-4 md:grid-cols-3">
+            {osOrder.map((os) => {
+              const osAssets = assetsFor(release, os);
+              const Icon = os === 'linux' ? FaLinux : os === 'macos' ? FaApple : FaWindows;
+
+              return (
+                <div class="rounded-xl border border-white/10 bg-zinc-950/60 p-4">
+                  <div class="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+                    <Icon className="size-4" aria-hidden="true" />
+                    <span>{osLabels[os]}</span>
+                  </div>
+
+                  {osAssets.length === 0 ? (
+                    <p class="text-sm text-zinc-500">No binary assets for this OS.</p>
+                  ) : (
+                    <div class="space-y-4">
+                      {archesFor(osAssets).map((arch) => {
+                        const server = assetFor(osAssets, arch, 'server');
+                        const client = assetFor(osAssets, arch, 'client');
+
+                        return (
+                          <div class="space-y-1">
+                            <div class="text-xs uppercase tracking-[0.14em] text-zinc-500">{arch}</div>
+                            <div class="flex flex-wrap gap-2">
+                              {server && (
+                                <a
+                                  href={server.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  class="rounded-md border border-white/10 px-2.5 py-1.5 text-sm text-zinc-200 hover:border-emerald-400/40 hover:text-emerald-300"
+                                >
+                                  Server
+                                </a>
+                              )}
+                              {client && (
+                                <a
+                                  href={client.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  class="rounded-md border border-white/10 px-2.5 py-1.5 text-sm text-zinc-200 hover:border-emerald-400/40 hover:text-emerald-300"
+                                >
+                                  Client
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div class="flex flex-wrap gap-3 text-sm">
+        <a
+          href={release.githubUrl}
+          target="_blank"
+          rel="noreferrer"
+          class="rounded-lg border border-white/10 px-3 py-2 text-zinc-100 hover:border-emerald-400/40 hover:text-emerald-300"
+        >
+          Full release notes on GitHub
+        </a>
+        <a
+          href={release.changelogUrl}
+          target="_blank"
+          rel="noreferrer"
+          class="rounded-lg border border-white/10 px-3 py-2 text-zinc-100 hover:border-emerald-400/40 hover:text-emerald-300"
+        >
+          CHANGELOG
+        </a>
+      </div>
+    </section>
+  ))}
+</div>
