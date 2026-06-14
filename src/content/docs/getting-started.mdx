@@ -1,11 +1,11 @@
 ---
 title: Getting Started
-description: Run a local Vaylix node, connect with the TypeScript SDK, and issue real commands in a few minutes.
+description: Run a local Vaylix node, connect with an SDK, and issue real commands in a few minutes.
 ---
 
 This page covers the shortest path from zero to a working local Vaylix instance with durable data.
 
-**Since version:** `0.1.0`, updated for server `0.9.0` and TypeScript SDK `0.4.0`.
+**Since version:** `0.1.0`, updated for server `0.9.0`, TypeScript SDK `0.4.0`, and Go SDK `v0.1.0`.
 
 **Caveat:** Vaylix is pre-1.0. The examples below are current and working, but storage compatibility is still governed by the documented pre-1.0 policy.
 
@@ -14,6 +14,7 @@ This page covers the shortest path from zero to a working local Vaylix instance 
 - Docker, or
 - a Rust toolchain if you want to build the server locally
 - Node.js `>= 20.19.0` if you want to use the official TypeScript SDK
+- Go `1.22+` if you want to use the official Go SDK
 
 ## Run with Docker
 
@@ -49,6 +50,45 @@ try {
   console.log(value);
 } finally {
   await client.close();
+}
+```
+
+## Connect with the Go SDK
+
+```bash
+go get github.com/vaylix/vaylix-go@v0.1.0
+```
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	vaylix "github.com/vaylix/vaylix-go"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := vaylix.Connect(ctx, vaylix.Options{
+		URL: "vaylix://vaylix:vaylix@127.0.0.1:9173",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	if _, err := client.Set(ctx, "config:feature-x", "enabled", nil); err != nil {
+		log.Fatal(err)
+	}
+
+	value, ok, err := client.Get(ctx, "config:feature-x")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("value=%q ok=%v", value, ok)
 }
 ```
 
@@ -141,3 +181,4 @@ Local native runs default to `./default.vaylix` unless `--data-dir` or `VAYLIX_D
 - [Security](/security/)
 - [Replication](/replication/)
 - [TypeScript client](/clients/typescript/)
+- [Go client](/clients/go/)

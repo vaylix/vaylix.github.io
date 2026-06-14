@@ -13,7 +13,10 @@ export const docsSidebar = [
   },
   {
     label: 'Clients',
-    items: [{ label: 'TypeScript', slug: 'clients/typescript' }],
+    items: [
+      { label: 'TypeScript', slug: 'clients/typescript' },
+      { label: 'Go', slug: 'clients/go' },
+    ],
   },
   {
     label: 'Releases',

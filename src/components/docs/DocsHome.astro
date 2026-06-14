@@ -13,6 +13,7 @@ heroExample,
 heroProperties,
 landingCliReplExample,
 landingDockerExample,
+landingGoSdkExample,
 landingSdkExample,
 nonGuarantees,
 notForWorkloads,
@@ -38,9 +39,9 @@ suitableWorkloads
             returning success.
           </p>
           <p class="text-sm leading-6 text-zinc-500">
-            Current line: server {currentLine.server}, TypeScript SDK {currentLine.sdk}. Pre-1.0
-            means the storage format and compatibility policy are documented explicitly instead of
-            implied.
+            Current line: server {currentLine.server}, TypeScript SDK {currentLine.typescriptSdk},
+            Go SDK {currentLine.goSdk}. Pre-1.0 means the storage format and compatibility policy
+            are documented explicitly instead of implied.
           </p>
         </div>
 
@@ -201,7 +202,7 @@ suitableWorkloads
     <div class="space-y-2">
       <h2 class="text-2xl font-semibold text-white">Getting started in five minutes</h2>
       <p class="text-sm leading-7 text-zinc-300 sm:text-base">
-        Start one node with Docker, connect with the TypeScript SDK, and write a durable key.
+        Start one node with Docker, connect with an SDK, and write a durable key.
         Follow the full guide for local clustering, TLS, and non-default credentials.
       </p>
     </div>
@@ -216,6 +217,12 @@ suitableWorkloads
       <Card title="Connect with TypeScript">
         <div class="max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/50">
           <Code code={landingSdkExample} lang="ts" />
+        </div>
+      </Card>
+
+      <Card title="Connect with Go">
+        <div class="max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/50">
+          <Code code={landingGoSdkExample} lang="go" />
         </div>
       </Card>
 

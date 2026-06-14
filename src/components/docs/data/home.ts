@@ -1,9 +1,10 @@
 import {
   latestDockerPassword,
   latestDockerUser,
-  latestSdkVersion,
+  latestGoSdkVersion,
   latestServerImage,
   latestServerVersion,
+  latestTypeScriptSdkVersion,
 } from './versions';
 
 export const heroProperties = [
@@ -48,6 +49,31 @@ try {
   console.log({ value, ttlApplied, casOk });
 } finally {
   await client.close();
+}`;
+
+export const landingGoSdkExample = `package main
+
+import (
+	"context"
+	"log"
+
+	vaylix "github.com/vaylix/vaylix-go"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := vaylix.Connect(ctx, vaylix.Options{
+		URL: "vaylix://${latestDockerUser}:${latestDockerPassword}@127.0.0.1:9173",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	if _, err := client.Set(ctx, "config:feature-x", "enabled", nil); err != nil {
+		log.Fatal(err)
+	}
 }`;
 
 export const landingCliReplExample = `$ vaylix-client --url 'vaylix://vaylix:vaylix@127.0.0.1:9173'
@@ -128,5 +154,6 @@ export const compatibilityLinks = [
 
 export const currentLine = {
   server: latestServerVersion,
-  sdk: latestSdkVersion,
+  typescriptSdk: latestTypeScriptSdkVersion,
+  goSdk: latestGoSdkVersion,
 };

@@ -1,0 +1,228 @@
+---
+title: Go Client
+description: Use the official Go SDK to connect to Vaylix over TCP or TLS.
+---
+
+This page covers the official Go SDK and the parts of the server surface it exposes today.
+
+**Since version:** Go SDK support is available in `github.com/vaylix/vaylix-go` `v0.1.0`.
+
+**Caveat:** The Go SDK is a `v0` preview client. It reads `DATABASE_URL` when no explicit URL is provided, but it does not load `.env` files.
+
+## Install
+
+The module path is `github.com/vaylix/vaylix-go`. Install the `v0.1.0` Git tag:
+
+```bash
+go get github.com/vaylix/vaylix-go@v0.1.0
+```
+
+The SDK requires Go `1.22+`.
+
+## Connect
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	vaylix "github.com/vaylix/vaylix-go"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := vaylix.Connect(ctx, vaylix.Options{
+		URL: "vaylix://vaylix:vaylix@127.0.0.1:9173",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	if _, err := client.Set(ctx, "config:mode", "production", nil); err != nil {
+		log.Fatal(err)
+	}
+
+	value, ok, err := client.Get(ctx, "config:mode")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("value=%q ok=%v", value, ok)
+}
+```
+
+The SDK speaks VTP2 directly over TCP/TLS and supports zstd transport compression through startup negotiation.
+
+## DATABASE_URL
+
+When `Options.URL` is empty, the SDK reads `DATABASE_URL` from the process environment.
+
+```bash
+export DATABASE_URL='vaylix://vaylix:vaylix@127.0.0.1:9173'
+```
+
+```go
+client, err := vaylix.Connect(ctx, vaylix.Options{})
+```
+
+## Common operations
+
+```go
+_, _ = client.Ping(ctx)
+_, _ = client.Set(ctx, "config:mode", "production", nil)
+value, ok, err := client.Get(ctx, "config:mode")
+_ = value
+_ = ok
+_ = err
+```
+
+The client also exposes MGET/MSET, expiration, info, health, cluster, replication, metrics, transactions, and pool APIs.
+
+## Binary-safe values
+
+Vaylix values are opaque bytes. Use the byte APIs when values are not guaranteed to be UTF-8.
+
+```go
+payload := []byte{0x00, 0xff, 0x61}
+
+_, err := client.SetBytes(ctx, "blob:1", payload, nil)
+restored, ok, err := client.GetBytes(ctx, "blob:1")
+_ = restored
+_ = ok
+_ = err
+```
+
+## SET options
+
+SET supports TTL seconds, TTL milliseconds, KEEPTTL, NX, XX, IF VERSION, and returning the previous value. Do not combine mutually exclusive options in one call.
+
+```go
+ttl := uint64(60)
+
+result, err := client.Set(ctx, "config:mode", "maintenance", &vaylix.SetOptions{
+	TTLSeconds:     &ttl,
+	OnlyIfExists:   true,
+	ReturnPrevious: true,
+})
+_ = result
+_ = err
+```
+
+Use version checks without NX or XX:
+
+```go
+version := uint64(1)
+
+result, err := client.Set(ctx, "config:mode", "maintenance", &vaylix.SetOptions{
+	IfVersion:      &version,
+	ReturnPrevious: true,
+})
+_ = result
+_ = err
+```
+
+## Transactions
+
+```go
+tx, err := client.Transaction(ctx)
+if err != nil {
+	return err
+}
+
+results, err := tx.
+	Set("tx:key", "value", nil).
+	Get("tx:key").
+	Exists("tx:key").
+	Exec(ctx)
+_ = results
+_ = err
+```
+
+## Pool
+
+Use the round-robin pool when you want a small set of reusable connections.
+
+```go
+pool, err := vaylix.NewPool(vaylix.Options{
+	URL: "vaylix://vaylix:vaylix@127.0.0.1:9173",
+}, vaylix.PoolOptions{Max: 4})
+if err != nil {
+	return err
+}
+defer pool.Close()
+
+if err := pool.Connect(ctx); err != nil {
+	return err
+}
+
+_, err = pool.Set(ctx, "pool:key", "value", nil)
+```
+
+## Cluster and health calls
+
+```go
+_, _ = client.Health(ctx)
+_, _ = client.ShowCluster(ctx)
+_, _ = client.ShowReplication(ctx)
+_, _ = client.Metrics(ctx)
+```
+
+## TLS and mTLS
+
+```go
+client, err := vaylix.Connect(ctx, vaylix.Options{
+	Host: "db.example.com",
+	TLS: &vaylix.TLSOptions{
+		Enabled:    true,
+		CAFile:     "/path/to/ca.pem",
+		CertFile:   "/path/to/client.crt",
+		KeyFile:    "/path/to/client.key",
+		ServerName: "db.example.com",
+	},
+})
+```
+
+## Error handling
+
+The SDK returns typed Go errors compatible with `errors.As` and preserves remote server error payloads.
+
+```go
+import (
+	"errors"
+	"log"
+
+	vaylix "github.com/vaylix/vaylix-go"
+)
+
+_, err := client.Set(ctx, "key", "value", nil)
+
+var auth *vaylix.AuthenticationError
+var follower *vaylix.FollowerWriteRejectedError
+var remote *vaylix.RemoteCommandError
+
+switch {
+case errors.As(err, &auth):
+	log.Printf("auth failed: %s", auth.Payload.Message)
+case errors.As(err, &follower):
+	log.Printf("follower rejected write: %s", follower.Payload.Message)
+case errors.As(err, &remote):
+	log.Printf("%s (%s): %s", remote.Payload.Name, remote.Payload.Code, remote.Payload.Message)
+}
+```
+
+## Limits
+
+- preview `v0` API surface
+- no `.env` loading
+
+The SDK is an implementation-specific client for the VTP2 server surface.
+
+## Read next
+
+- [Getting Started](/getting-started/)
+- [TypeScript client](/clients/typescript/)
+- [Reference / Commands](/reference/commands/)
+- [Reference / Protocol](/reference/protocol/)
